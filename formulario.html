@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHL — Cadastro de Agregados (v4)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--dhl-red:#D40511;--dhl-yellow:#FFCC00;--dhl-dark:#1A1A1A;--dhl-gray:#4A4A4A;--dhl-light-gray:#F5F5F5;--dhl-border:#E0E0E0;--success:#2E7D32;--success-light:#E8F5E9;--error:#C62828;--error-light:#FFEBEE;--warning:#F57F17;--warning-light:#FFFDE7;--info:#1565C0;--info-light:#E3F2FD;--white:#FFF;--shadow:0 2px 12px rgba(0,0,0,.08);--radius:8px;--radius-lg:12px;--transition:all .3s ease}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#F0F2F5;color:var(--dhl-dark);min-height:100vh;font-size:14px}
+.header{background:var(--dhl-red);padding:12px 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(212,5,17,.3)}
+.header-inner{max-width:920px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.header-logo{background:var(--dhl-yellow);padding:4px 12px;border-radius:4px;font-size:22px;font-weight:900;color:var(--dhl-red);letter-spacing:-1px}
+.header-title{color:#fff;font-size:13px}.header-title strong{display:block;font-size:15px}
+.stepper-wrap{background:#fff;border-bottom:1px solid var(--dhl-border);padding:14px 16px;overflow-x:auto;position:sticky;top:58px;z-index:99}
+.stepper{max-width:920px;margin:0 auto;display:flex;align-items:center;min-width:320px}
+.step{display:flex;align-items:center;flex:1}
+.step-bubble{width:30px;height:30px;border-radius:50%;background:var(--dhl-border);color:#999;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;transition:var(--transition)}
+.step.active .step-bubble{background:var(--dhl-red);color:#fff}.step.done .step-bubble{background:var(--success);color:#fff}
+.step-label{margin-left:8px;font-size:12px;font-weight:600;color:#999;white-space:nowrap}
+.step.active .step-label{color:var(--dhl-red)}.step.done .step-label{color:var(--success)}
+.step-connector{flex:1;height:2px;background:var(--dhl-border);margin:0 8px;min-width:20px}.step-connector.done{background:var(--success)}
+.container{max-width:920px;margin:16px auto;padding:0 12px}
+.mockup-badge{background:var(--dhl-yellow);border:2px solid var(--warning);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;display:flex;gap:8px}
+.concept-badge{background:var(--info-light);border:1px solid #90CAF9;border-left:5px solid var(--info);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:12px;display:flex;gap:8px;color:#0D47A1}
+.concept-badge strong{display:block;margin-bottom:2px}
+.bloco{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden;border:1px solid var(--dhl-border)}
+.bloco-header{background:linear-gradient(135deg,var(--dhl-red),#B00020);padding:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bloco-header-icon{width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
+.bloco-header-text h2{color:#fff;font-size:16px}.bloco-header-text p{color:rgba(255,255,255,.75);font-size:12px}
+.bloco-badge{margin-left:auto;background:rgba(255,255,255,.2);color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.bloco-body{padding:16px}
+.step-rules{margin-bottom:16px}
+.step-rules-card{position:relative;background:#fff;border:1.5px solid var(--info);border-left:5px solid var(--info);border-radius:var(--radius);padding:12px 14px;box-shadow:0 4px 18px rgba(21,101,192,.12)}
+.step-rules-card.pass{border-color:var(--success);border-left-color:var(--success);box-shadow:0 4px 18px rgba(46,125,50,.12)}
+.step-rules-card.fail{border-color:var(--error);border-left-color:var(--error);box-shadow:0 4px 18px rgba(198,40,40,.12)}
+.step-rules-card-head{margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--dhl-border)}
+.step-rules-card-title{font-size:13px;font-weight:700;color:var(--dhl-dark)}
+.step-rules-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.step-rules-col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.step-rules-section-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.step-rules-section .rule-list{gap:5px}
+.step-rules-section .rule-list li{font-size:11px;line-height:1.4}
+.step-rules-col>.rule-list{margin-top:4px}
+.tipo-toggle{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.tipo-btn{width:100%;padding:14px;border:2px solid var(--dhl-border);border-radius:var(--radius);background:#fff;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--dhl-gray);text-align:left;font-family:inherit}
+.tipo-btn:hover{border-color:var(--dhl-red)}.tipo-btn.selected{border-color:var(--dhl-red);background:#FFF5F5;color:var(--dhl-red)}
+.tipo-icon{width:32px;height:32px;border-radius:50%;background:var(--dhl-light-gray);display:flex;align-items:center;justify-content:center;font-size:16px}
+.tipo-btn.selected .tipo-icon{background:var(--dhl-red)}
+.form-section{display:none}.form-section.visible{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.form-row{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:12px;font-weight:600;color:var(--dhl-gray)}
+.required-star{color:var(--dhl-red)}
+.form-control{padding:10px 12px;border:1.5px solid var(--dhl-border);border-radius:var(--radius);font-size:14px;color:var(--dhl-dark);background:#fff;transition:var(--transition);outline:none;width:100%;font-family:inherit}
+.form-control:focus{border-color:var(--dhl-red);box-shadow:0 0 0 3px rgba(212,5,17,.08)}
+.form-control.success{border-color:var(--success);background:var(--success-light)}
+.form-control.error{border-color:var(--error);background:var(--error-light)}
+.form-control:disabled,.form-control[readonly]{background:var(--dhl-light-gray);color:#666}
+select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234A4A4A' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.input-group{display:flex;gap:8px}.input-group .form-control{flex:1}
+.btn-buscar{padding:10px 14px;background:var(--dhl-red);color:#fff;border:none;border-radius:var(--radius);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-buscar:hover{background:#B00020}.btn-buscar:disabled{background:#ccc;cursor:not-allowed}
+.field-hint{font-size:11px;color:#999;font-style:italic}
+.fake-tag{display:inline-block;background:var(--dhl-yellow);color:var(--dhl-dark);font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;text-transform:uppercase;margin-left:4px}
+.video-link{font-size:11px;color:var(--info);font-weight:700;text-decoration:none;display:inline-flex;gap:4px;margin:4px 0;cursor:pointer}
+.status-box{padding:12px 14px;border-radius:var(--radius);margin-top:10px;font-size:12px;display:none;align-items:flex-start;gap:10px;border:1px solid transparent}
+.status-box.show{display:flex}
+.status-box.loading{background:var(--info-light);border-color:#90CAF9;color:var(--info)}
+.status-box.ok{background:var(--success-light);border-color:#A5D6A7;color:var(--success)}
+.status-box.fail{background:var(--error-light);border-color:#EF9A9A;color:var(--error)}
+.status-box.warn{background:var(--warning-light);border-color:#FFE082;color:var(--warning)}
+.status-icon{font-size:16px}.status-content strong{display:block;margin-bottom:3px;font-size:13px}
+.spinner{width:16px;height:16px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rule-balloon{position:relative;background:#fff;border:1.5px solid var(--info);border-left:5px solid var(--info);border-radius:var(--radius);padding:12px 14px;margin-top:14px;box-shadow:0 4px 18px rgba(21,101,192,.18);animation:pop .45s cubic-bezier(.18,.89,.32,1.28)}
+.rule-balloon::before{content:'';position:absolute;top:-8px;left:26px;width:14px;height:14px;background:#fff;border-left:1.5px solid var(--info);border-top:1.5px solid var(--info);transform:rotate(45deg)}
+.rule-balloon.pass{border-color:var(--success);border-left-color:var(--success);box-shadow:0 4px 18px rgba(46,125,50,.18)}.rule-balloon.pass::before{border-color:var(--success)}
+.rule-balloon.fail{border-color:var(--error);border-left-color:var(--error);box-shadow:0 4px 18px rgba(198,40,40,.18)}.rule-balloon.fail::before{border-color:var(--error)}
+@keyframes pop{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.rule-balloon-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.rule-ref{background:var(--info);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.rule-balloon.pass .rule-ref{background:var(--success)}.rule-balloon.fail .rule-ref{background:var(--error)}
+.rule-balloon-title{font-size:13px;font-weight:700}
+.rule-list{list-style:none;display:flex;flex-direction:column;gap:7px}
+.rule-list li{font-size:12px;line-height:1.45;display:flex;gap:7px}
+.rule-list li .ri{flex-shrink:0;font-size:13px}
+.rule-pass{color:#1b5e20}.rule-fail{color:#b71c1c;font-weight:600}.rule-warn{color:#e65100}.rule-info{color:#0d47a1}.rule-pending{color:#666}.rule-na{color:#999;font-style:italic}
+.validated-card{background:var(--success-light);border:1px solid #A5D6A7;border-radius:var(--radius);padding:14px;margin-top:12px;display:none}
+.validated-card.show{display:block}
+.validated-card-header{display:flex;gap:6px;font-weight:700;color:var(--success);margin-bottom:10px;font-size:13px}
+.validated-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.validated-item label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#666;display:block}
+.validated-item span{font-size:12px;font-weight:600}
+.section-divider{display:flex;align-items:center;gap:10px;margin:20px 0 14px}
+.section-divider span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--dhl-gray);white-space:nowrap}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--dhl-border)}
+.upload-area{border:2px dashed var(--dhl-border);border-radius:var(--radius);padding:22px 16px;text-align:center;cursor:pointer;transition:var(--transition);background:var(--dhl-light-gray)}
+.upload-area:hover{border-color:var(--dhl-red);background:#FFF5F5}.upload-area.has-file{border-color:var(--success);background:var(--success-light)}
+.upload-icon{font-size:30px;margin-bottom:6px}.upload-area p{font-size:13px;color:var(--dhl-gray);margin:3px 0}.upload-hint{font-size:11px;color:#999}
+.upload-input{display:none}.upload-filename{margin-top:8px;font-size:12px;font-weight:600;color:var(--success);display:none}
+/* MÉTODOS DE CAPTURA */
+.upload-methods{display:flex;gap:8px;margin-bottom:10px}
+.method-btn{flex:1;padding:10px;border:1.5px solid var(--dhl-border);border-radius:var(--radius);background:#fff;font-size:12px;font-weight:700;color:var(--dhl-gray);cursor:pointer;font-family:inherit}
+.method-btn.sel{border-color:var(--dhl-red);background:#FFF5F5;color:var(--dhl-red)}
+.qr-scan-btn{width:100%;padding:12px;border:1.5px dashed var(--info);background:var(--info-light);color:var(--info);border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.qr-scan-btn:hover{background:#d6e9fb}
+.multi-item{border:1.5px solid var(--dhl-border);border-radius:var(--radius);padding:16px;margin-bottom:14px;background:#FAFAFA}
+.multi-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.multi-item-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.multi-item-num{width:24px;height:24px;background:var(--dhl-red);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.btn-remove{padding:6px 12px;background:transparent;border:1.5px solid #EF9A9A;color:var(--error);border-radius:var(--radius);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-remove:hover{background:var(--error-light)}
+.btn-add{width:100%;padding:12px;border:2px dashed var(--dhl-red);background:transparent;color:var(--dhl-red);border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:none}
+.btn-add.visible{display:block}.btn-add:hover{background:#FFF5F5}
+.doc-choice{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.doc-option{padding:12px;border:2px solid var(--dhl-border);border-radius:var(--radius);cursor:pointer;transition:var(--transition);font-size:13px;font-weight:600;color:var(--dhl-gray);display:flex;justify-content:space-between;align-items:center}
+.doc-option:hover{border-color:var(--dhl-red)}.doc-option.selected{border-color:var(--dhl-red);background:#FFF5F5;color:var(--dhl-red)}
+.doc-option .rec{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase}
+.doc-option .rec.good{background:var(--success-light);color:var(--success)}.doc-option .rec.bad{background:var(--warning-light);color:var(--warning)}
+.converge-section{display:none}.converge-section.visible{display:block;animation:fadeIn .3s ease}
+.eligibility-box{margin-top:14px;border-radius:var(--radius);padding:14px;border:1.5px dashed var(--dhl-border);display:none}
+.eligibility-box.show{display:block}.eligibility-box.ok{border-color:var(--success);background:var(--success-light)}.eligibility-box.no{border-color:#FFE082;background:var(--warning-light)}
+.elig-check{display:flex;align-items:center;gap:10px;margin-top:10px}.elig-check input{width:18px;height:18px;accent-color:var(--dhl-red)}.elig-check label{font-size:13px;font-weight:700}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.pill{padding:8px 16px;border:1.5px solid var(--dhl-border);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:var(--dhl-gray)}
+.pill.sel{border-color:var(--dhl-red);background:#FFF5F5;color:var(--dhl-red)}
+.pill.sel.danger{border-color:var(--error);background:var(--error-light);color:var(--error)}
+.check-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.check-item{display:flex;align-items:center;gap:10px;font-size:13px}.check-item input{width:18px;height:18px;accent-color:var(--dhl-red)}
+.milha-badge{display:inline-flex;align-items:center;gap:6px;background:var(--info-light);color:var(--info);border:1px solid #90CAF9;font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px}
+.antt-mini{display:flex;gap:8px;margin-bottom:8px}
+.form-actions{background:#fff;border-top:2px solid var(--dhl-border);padding:16px;display:flex;flex-direction:column;gap:10px}
+.btn-primary{padding:14px;background:var(--dhl-red);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;width:100%}
+.btn-primary:hover{background:#B00020}
+.btn-secondary{padding:12px;background:transparent;color:var(--dhl-gray);border:1.5px solid var(--dhl-border);border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;width:100%}
+.actions-row{display:flex;gap:10px}.actions-row .btn-secondary{flex:1}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-content{background:#fff;border-radius:var(--radius-lg);padding:32px 24px;text-align:center;max-width:400px;width:100%}
+.modal-content.modal-video{max-width:720px;padding:0;text-align:left;overflow:hidden}
+.modal-video-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--dhl-border)}
+.modal-video-header h3{margin:0;font-size:16px;color:var(--dhl-dark)}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:#999;padding:4px 8px;line-height:1;font-family:inherit}
+.modal-close:hover{color:var(--dhl-red)}
+.video-wrap{position:relative;padding-bottom:56.25%;height:0;background:#000}
+.video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+.modal-icon{font-size:56px;margin-bottom:16px}.modal-content h3{font-size:20px;margin-bottom:8px;color:var(--success)}.modal-content p{font-size:14px;color:var(--dhl-gray);margin-bottom:20px}
+@media(min-width:640px){.tipo-toggle{flex-direction:row}.doc-choice{flex-direction:row}.form-row.two{grid-template-columns:1fr 1fr}.form-row.three{grid-template-columns:1fr 1fr 1fr}.validated-grid{grid-template-columns:1fr 1fr}.form-actions{flex-direction:row;justify-content:space-between}.btn-primary,.btn-secondary{width:auto}.btn-primary{padding:14px 32px}.bloco-body{padding:24px}.step-rules-section .rule-list li{font-size:12px}}
+@media(min-width:900px){.validated-grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+
+<header class="header"><div class="header-inner"><div class="header-logo">DHL</div><div class="header-title"><strong>Cadastro de Agregados</strong>Beneficiário · Veículos · Motoristas</div></div></header>
+
+<div class="stepper-wrap"><div class="stepper">
+  <div class="step active" id="step-1"><div class="step-bubble">1</div><span class="step-label">Beneficiário</span></div>
+  <div class="step-connector" id="conn-1"></div>
+  <div class="step" id="step-2"><div class="step-bubble">2</div><span class="step-label">Veículos</span></div>
+  <div class="step-connector" id="conn-2"></div>
+  <div class="step" id="step-3"><div class="step-bubble">3</div><span class="step-label">Motoristas</span></div>
+  <div class="step-connector" id="conn-3"></div>
+  <div class="step" id="step-4"><div class="step-bubble">4</div><span class="step-label">Proprietário</span></div>
+</div></div>
+
+<div class="container">
+  <div class="mockup-badge"><span>🧪</span><div><strong>PROTÓTIPO</strong> — Receita/SERPRO/DETRAN/Correios/QR simulados.</div></div>
+  <div class="concept-badge"><span>💡</span><div><strong>Balões de Regra</strong>A cada ação, um balão cita a <b>regra de negócio</b> aplicada e o resultado (✅ aprovado · ❌ reprovado · ⚠️ atenção · ℹ️ info).</div></div>
+
+  <form id="mainForm" novalidate>
+
+  <!-- ===== BLOCO 1: BENEFICIÁRIO ===== -->
+  <div class="bloco" id="bloco-benef">
+    <div class="bloco-header"><div class="bloco-header-icon">🏢</div><div class="bloco-header-text"><h2>1 — Beneficiário</h2><p>Responsável pelo contrato</p></div><span class="bloco-badge">1 registro</span></div>
+    <div class="bloco-body">
+      <div class="step-rules" id="rules-benef"></div>
+      <p style="font-size:12px;font-weight:700;color:var(--dhl-gray);margin-bottom:8px">Tipo de beneficiário <span class="required-star">*</span></p>
+      <div class="tipo-toggle">
+        <button type="button" class="tipo-btn" id="btn-pj" onclick="selectTipo('pj')"><div class="tipo-icon">🏢</div><div><strong>Pessoa Jurídica</strong><br><small style="font-weight:400;font-size:11px">Empresa / MEI / CNPJ</small></div></button>
+        <button type="button" class="tipo-btn" id="btn-pf" onclick="selectTipo('pf')"><div class="tipo-icon">👤</div><div><strong>Pessoa Física</strong><br><small style="font-weight:400;font-size:11px">CPF / Autônomo</small></div></button>
+      </div>
+
+      <!-- PJ -->
+      <div class="form-section" id="sec-pj">
+        <div class="section-divider"><span>Dados da Empresa</span></div>
+        <div class="form-row"><div class="form-group">
+          <label>CNPJ <span class="required-star">*</span> <span class="fake-tag">🔗 Receita / SERPRO</span></label>
+          <div class="input-group"><input type="text" id="cnpj" class="form-control" placeholder="00.000.000/0000-00" maxlength="18" oninput="maskCNPJ(this)"><button type="button" class="btn-buscar" id="btn-cnpj" onclick="consultarCNPJ()">🔍 Consultar</button></div>
+          <span class="field-hint">Teste: <b>00…00</b>=inválido · <b>11…11</b>=inativo · <b>22…22</b>=CNAE inválido · <b>33…33</b>=MEI · outro=Ltda c/ transporte</span>
+        </div></div>
+        <div class="status-box loading" id="cnpj-loading"><div class="spinner"></div><div class="status-content"><strong>Consultando Receita/SERPRO…</strong></div></div>
+        <div class="validated-card" id="cnpj-card">
+          <div class="validated-card-header">✅ CNPJ — Receita Federal</div>
+          <div class="validated-grid">
+            <div class="validated-item"><label>Razão Social</label><span id="rf-razao">—</span></div>
+            <div class="validated-item"><label>CNPJ</label><span id="rf-cnpj">—</span></div>
+            <div class="validated-item"><label>Situação</label><span id="rf-sit">—</span></div>
+            <div class="validated-item"><label>Natureza</label><span id="rf-nat">—</span></div>
+            <div class="validated-item"><label>CNAE Principal</label><span id="rf-cnae">—</span></div>
+            <div class="validated-item"><label>CNAE em</label><span id="rf-cnaeloc">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PF -->
+      <div class="form-section" id="sec-pf">
+        <div class="section-divider"><span>Documento (extração automática)</span></div>
+        <p style="font-size:12px;font-weight:700;color:var(--dhl-gray);margin-bottom:8px">Qual documento você possui? <span class="required-star">*</span></p>
+        <div class="doc-choice">
+          <label class="doc-option" id="opt-cnh" onclick="selectDoc('cnh')"><span>🪪 CNH (arquivo digital)</span><span class="rec good">Recomendado</span></label>
+          <label class="doc-option" id="opt-rg" onclick="selectDoc('rg')"><span>📄 Apenas RG</span><span class="rec bad">Limitado</span></label>
+        </div>
+
+        <div class="form-section" id="sec-pfdoc">
+          <div id="pfdoc-wrap" class="form-group">
+            <label id="pfdoc-label">Upload da CNH <span class="required-star">*</span> <span class="fake-tag">🔗 SERPRO + OCR/QR</span></label>
+            <a class="video-link" href="#" onclick="openVideoModal(event)">▶ Ver vídeo: como enviar o documento</a>
+            <div class="upload-methods">
+              <button type="button" class="method-btn sel" data-m="file">📤 Enviar arquivo</button>
+              <button type="button" class="method-btn" data-m="qr">📷 Ler QR Code + Foto</button>
+            </div>
+            <div class="mb-file">
+              <div class="upload-area pf-up"><div class="upload-icon" id="pfdoc-ico">🪪</div><p><strong id="pfdoc-strong">Clique para enviar a CNH</strong></p><p class="upload-hint">PDF, JPG ou PNG · Máx 5MB</p><div class="upload-filename"></div></div>
+              <input type="file" class="upload-input pf-file" accept=".pdf,.jpg,.jpeg,.png">
+            </div>
+            <div class="mb-qr" style="display:none">
+              <button type="button" class="qr-scan-btn">📷 Ler QR Code do documento</button>
+              <div class="qr-read status-box"></div>
+              <div class="qr-photo" style="display:none;margin-top:10px">
+                <div class="upload-area pf-photo-up"><div class="upload-icon">🖼️</div><p><strong>Anexar foto do documento</strong></p><p class="upload-hint">A qualidade será verificada</p><div class="upload-filename"></div></div>
+                <input type="file" class="upload-input pf-photo-file" accept=".jpg,.jpeg,.png">
+              </div>
+            </div>
+            <span class="field-hint">Extrai CPF/nascimento. Teste nome: <b>vencida</b> · <b>semear</b> · <b>provisoria</b> · Foto QR: <b>ruim</b>=baixa qualidade · <b>divergente</b>=não bate c/ SERPRO</span>
+          </div>
+          <div class="status-box loading" id="pfdoc-loading"><div class="spinner"></div><div class="status-content"><strong>Lendo documento (OCR/QR + SERPRO)…</strong></div></div>
+          <div class="validated-card" id="pfdoc-card"><div class="validated-card-header" id="pfdoc-cardh">✅ Dados extraídos</div><div class="validated-grid" id="pfdoc-grid"></div></div>
+          <div class="eligibility-box" id="elig-box" style="display:none"><div id="elig-content"></div></div>
+        </div>
+      </div>
+
+      <!-- CONVERGÊNCIA -->
+      <div class="converge-section" id="converge">
+        <div class="section-divider"><span>Endereço</span></div>
+        <div class="form-row"><div class="form-group">
+          <label>CEP <span class="required-star">*</span> <span class="fake-tag">🔗 Correios</span></label>
+          <div class="input-group"><input type="text" id="cep" class="form-control" placeholder="00000-000" maxlength="9" oninput="maskCEP(this)"><button type="button" class="btn-buscar" onclick="buscarCEP()">🔍 Buscar</button></div>
+          <span class="field-hint">Teste: <b>00000-000</b>=erro</span>
+        </div></div>
+        <div class="status-box loading" id="cep-loading"><div class="spinner"></div><div class="status-content"><strong>Consultando Correios…</strong></div></div>
+        <div class="status-box fail" id="cep-error"><span class="status-icon">❌</span><div class="status-content"><strong>CEP não encontrado</strong></div></div>
+        <div id="endereco-fields" style="display:none">
+          <div class="form-row two"><div class="form-group"><label>Logradouro</label><input type="text" id="logradouro" class="form-control" readonly></div><div class="form-group"><label>Bairro</label><input type="text" id="bairro" class="form-control" readonly></div></div>
+          <div class="form-row two"><div class="form-group"><label>Cidade</label><input type="text" id="cidade" class="form-control" readonly></div><div class="form-group"><label>UF</label><input type="text" id="estado" class="form-control" readonly></div></div>
+          <div class="form-row two"><div class="form-group"><label>Número <span class="required-star">*</span></label><input type="text" id="numero" class="form-control" placeholder="123"></div><div class="form-group"><label>Complemento</label><input type="text" id="complemento" class="form-control" placeholder="Apto, Sala…"></div></div>
+        </div>
+
+        <div id="pis-wrap" style="display:none">
+          <div class="form-row"><div class="form-group">
+            <label>PIS/PASEP <span class="required-star">*</span></label>
+            <input type="text" id="pf-pis" class="form-control" placeholder="000.00000.00-0" maxlength="14" oninput="maskPIS(this)" onblur="validaPIS()">
+            <span class="field-hint">Teste: começar com <b>0</b>=inválido</span>
+          </div></div>
+        </div>
+
+        <div class="section-divider"><span>Contato</span></div>
+        <div class="form-row two">
+          <div class="form-group"><label>Celular 1 <span class="required-star">*</span></label><input type="text" class="form-control" id="cel1" placeholder="(11) 99999-9999" maxlength="15" oninput="maskPhone(this)"></div>
+          <div class="form-group"><label>Celular 2</label><input type="text" class="form-control" id="cel2" placeholder="(11) 98888-8888" maxlength="15" oninput="maskPhone(this)"></div>
+        </div>
+        <div class="form-row"><div class="form-group"><label>E-mail <span class="required-star">*</span></label><input type="email" class="form-control" id="bmail" placeholder="beneficiario@email.com"></div></div>
+
+        <div class="section-divider"><span id="antt-div-label">Registro ANTT</span></div>
+        <div class="form-row"><div class="form-group">
+          <label id="antt-label">Nº ANTT / RNTRC <span class="fake-tag">🔗 ANTT (armazenado)</span></label>
+          <input type="text" id="antt" class="form-control" placeholder="Ex: TR-12345678-9" oninput="onAnttInput()">
+          <span class="field-hint" id="antt-hint">O sistema apenas <b>armazena</b> a ANTT (validação futura via integração).</span>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BLOCO 2: VEÍCULOS ===== -->
+  <div class="bloco" id="bloco-veic">
+    <div class="bloco-header"><div class="bloco-header-icon">🚛</div><div class="bloco-header-text"><h2>2 — Veículos</h2><p>Tipo e milha automáticos via CRLV/DETRAN</p></div><span class="bloco-badge">1 ou mais</span></div>
+    <div class="bloco-body">
+      <div class="step-rules" id="rules-veic"></div>
+      <div class="status-box warn show" id="veic-ctx" style="margin-bottom:14px"><span class="status-icon">ℹ️</span><div class="status-content"><strong>Conclua o beneficiário</strong><p>As regras de veículo dependem da ANTT.</p></div></div>
+      <div id="veic-container"></div>
+      <button type="button" class="btn-add" id="btn-add-veic" onclick="addVeiculo()">➕ Adicionar outro veículo</button>
+    </div>
+  </div>
+
+  <!-- ===== BLOCO 3: MOTORISTAS ===== -->
+  <div class="bloco" id="bloco-mot">
+    <div class="bloco-header"><div class="bloco-header-icon">👷</div><div class="bloco-header-text"><h2>3 — Motoristas</h2><p>Validação automática via CNH</p></div><span class="bloco-badge">1 ou mais</span></div>
+    <div class="bloco-body">
+      <div class="step-rules" id="rules-mot"></div>
+      <div id="mot-container"></div>
+      <button type="button" class="btn-add" id="btn-add-mot" onclick="addMotorista()">➕ Adicionar outro motorista</button>
+    </div>
+  </div>
+
+  <!-- ===== BLOCO 4: PROPRIETÁRIO ===== -->
+  <div class="bloco" id="bloco-prop">
+    <div class="bloco-header"><div class="bloco-header-icon">📋</div><div class="bloco-header-text"><h2>4 — Proprietário</h2><p>Identificação automática via CRLV</p></div><span class="bloco-badge" id="prop-badge">Aguardando CRLV</span></div>
+    <div class="bloco-body">
+      <div class="step-rules" id="rules-prop"></div>
+      <div class="status-box fail" id="prop-error"><span class="status-icon">❌</span><div class="status-content"><strong id="prop-error-msg">—</strong></div></div>
+      <div class="status-box warn show" id="prop-wait"><span class="status-icon">ℹ️</span><div class="status-content"><strong>Aguardando veículo</strong><p>Cadastre ao menos um CRLV válido para identificar o proprietário.</p></div></div>
+
+      <div id="prop-auto-wrap" style="display:none">
+      <div id="prop-detected" style="display:none">
+        <div class="validated-card show" style="margin-top:0;margin-bottom:14px">
+          <div class="validated-card-header">🔎 Resultado da identificação automática</div>
+          <div class="validated-grid">
+            <div class="validated-item"><label>Correspondência</label><span id="prop-src">—</span></div>
+            <div class="validated-item"><label>Tipo de pessoa</label><span id="prop-ptype">—</span></div>
+            <div class="validated-item"><label>Documento do CRLV</label><span id="prop-doc-crlv">—</span></div>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--dhl-gray);text-align:center;margin-bottom:14px" id="prop-flow-msg">—</p>
+      </div>
+
+      <!-- PJ: dados do proprietário -->
+      <div id="prop-pj-summary" style="display:none">
+        <div class="validated-card show" style="margin-top:0">
+          <div class="validated-card-header">🏢 Dados do proprietário</div>
+          <div class="validated-grid">
+            <div class="validated-item"><label>CNPJ</label><span id="prop-pj-cnpj">—</span></div>
+            <div class="validated-item"><label>Razão social</label><span id="prop-pj-nome">—</span></div>
+          </div>
+        </div>
+        <div id="prop-pj-actions" style="margin-top:12px;text-align:right">
+          <button type="button" class="btn-secondary" style="width:auto;padding:8px 16px" onclick="propPjConcluir()">Continuar →</button>
+        </div>
+      </div>
+      </div>
+
+      <!-- PF: upload documento + formulário (auto OTHER ou manual PF) -->
+      <div id="prop-pf-upload" style="display:none">
+        <div class="section-divider"><span>Documento do proprietário</span></div>
+        <p style="font-size:12px;font-weight:700;color:var(--dhl-gray);margin-bottom:8px">Documento do proprietário (CNH ou RG) <span class="required-star">*</span></p>
+        <div class="doc-choice" style="margin-bottom:14px">
+          <label class="doc-option selected" id="prop-opt-cnh" onclick="selectPropDoc('cnh')"><span>🪪 CNH</span></label>
+          <label class="doc-option" id="prop-opt-rg" onclick="selectPropDoc('rg')"><span>📄 RG</span></label>
+        </div>
+        <div id="prop-doc-wrap" class="form-group">
+          <label id="prop-doc-label">Upload da CNH <span class="required-star">*</span> <span class="fake-tag">🔗 OCR</span></label>
+          <a class="video-link" href="#" onclick="openVideoModal(event)">▶ Ver vídeo: como enviar o documento</a>
+          <div class="upload-methods">
+            <button type="button" class="method-btn sel" data-m="file">📤 Enviar arquivo</button>
+            <button type="button" class="method-btn" data-m="qr">📷 Ler QR Code + Foto</button>
+          </div>
+          <div class="mb-file">
+            <div class="upload-area prop-up"><div class="upload-icon" id="prop-doc-ico">🪪</div><p><strong id="prop-doc-strong">Clique para enviar a CNH</strong></p><p class="upload-hint">PDF, JPG ou PNG · Máx 5MB</p><div class="upload-filename"></div></div>
+            <input type="file" class="upload-input prop-file" accept=".pdf,.jpg,.jpeg,.png">
+          </div>
+          <div class="mb-qr" style="display:none">
+            <button type="button" class="qr-scan-btn">📷 Ler QR Code do documento</button>
+            <div class="qr-read status-box"></div>
+            <div class="qr-photo" style="display:none;margin-top:10px">
+              <div class="upload-area prop-photo-up"><div class="upload-icon">🖼️</div><p><strong>Anexar foto do documento</strong></p><p class="upload-hint">A qualidade será verificada</p><div class="upload-filename"></div></div>
+              <input type="file" class="upload-input prop-photo-file" accept=".jpg,.jpeg,.png">
+            </div>
+          </div>
+          <span class="field-hint">Teste: <b>semocr</b>=preenchimento manual · demais=OCR automático</span>
+        </div>
+        <div class="status-box loading" id="prop-ocr-load"><div class="spinner"></div><div class="status-content"><strong>Processando o documento (OCR)…</strong></div></div>
+        <div id="prop-pf-form" style="display:none">
+          <div class="validated-card show" style="margin-top:14px">
+            <div class="validated-card-header">👤 Dados do proprietário</div>
+            <div class="form-row"><div class="form-group"><label>CPF <span class="required-star">*</span></label><input type="text" id="prop-cpf" class="form-control" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)"></div></div>
+            <div class="form-row"><div class="form-group"><label>RG <span class="required-star">*</span></label><input type="text" id="prop-rg" class="form-control" placeholder="RG"></div></div>
+            <div class="form-row"><div class="form-group"><label>Data de nascimento <span class="required-star">*</span></label><input type="date" id="prop-nasc" class="form-control"></div></div>
+            <div class="form-row"><div class="form-group"><label>Nome do proprietário <span class="required-star">*</span></label><input type="text" id="prop-nome" class="form-control" placeholder="Nome completo"></div></div>
+            <div class="form-row"><div class="form-group"><label>Nome da mãe <span class="required-star">*</span></label><input type="text" id="prop-mae" class="form-control" placeholder="Nome da mãe"></div></div>
+            <div class="form-row"><div class="form-group"><label>Celular <span class="required-star">*</span></label><input type="text" id="prop-cel" class="form-control" placeholder="(00) 00000-0000" maxlength="15" oninput="maskPhone(this)"></div></div>
+          </div>
+          <div style="margin-top:12px;text-align:right"><button type="button" class="btn-secondary" style="width:auto;padding:8px 16px" onclick="propContinuar()">Continuar →</button></div>
+        </div>
+      </div>
+
+      <!-- PF: resumo (motorista/beneficiário/outro/manual confirmado) -->
+      <div id="prop-pf-summary" style="display:none">
+        <div style="text-align:right;margin-bottom:8px" id="prop-edit-wrap"><button type="button" class="btn-secondary" style="width:auto;padding:8px 16px" onclick="propEditar()">✏️ Editar dados</button></div>
+        <div class="validated-card show" style="margin-top:0">
+          <div class="validated-card-header">✅ Confira os dados do proprietário</div>
+          <div class="validated-grid">
+            <div class="validated-item"><label>CPF</label><span id="prop-sum-cpf">—</span></div>
+            <div class="validated-item"><label>RG</label><span id="prop-sum-rg">—</span></div>
+            <div class="validated-item"><label>Nome do proprietário</label><span id="prop-sum-nome">—</span></div>
+            <div class="validated-item"><label>Data de nascimento</label><span id="prop-sum-nasc">—</span></div>
+            <div class="validated-item"><label>Nome da mãe</label><span id="prop-sum-mae">—</span></div>
+            <div class="validated-item"><label>Celular</label><span id="prop-sum-cel">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Envio manual (alternativo) -->
+      <div id="prop-manual-wrap" style="display:none">
+        <p style="font-size:12px;font-weight:700;color:var(--dhl-gray);margin-bottom:8px">Tipo de proprietário <span class="required-star">*</span></p>
+        <div class="doc-choice" style="margin-bottom:16px">
+          <label class="doc-option selected" id="prop-man-pf" onclick="selectPropManualTipo('pf')"><span>👤 Pessoa Física</span></label>
+          <label class="doc-option" id="prop-man-pj" onclick="selectPropManualTipo('pj')"><span>🏢 Pessoa Jurídica</span></label>
+        </div>
+        <div id="prop-manual-pj" style="display:none">
+          <div class="section-divider"><span>Dados da empresa (manual)</span></div>
+          <div class="form-row"><div class="form-group"><label>CNPJ <span class="required-star">*</span></label><input type="text" id="prop-man-cnpj" class="form-control" placeholder="00.000.000/0000-00" maxlength="18" oninput="maskCNPJ(this)"></div></div>
+          <div class="form-row"><div class="form-group"><label>Razão social <span class="required-star">*</span></label><input type="text" id="prop-man-razao" class="form-control" placeholder="Razão social"></div></div>
+          <div style="margin-top:12px;text-align:right"><button type="button" class="btn-secondary" style="width:auto;padding:8px 16px" onclick="propManualPjConcluir()">Continuar →</button></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="bloco"><div class="form-actions">
+    <div class="actions-row">
+      <button type="button" class="btn-secondary" onclick="alert('💾 Rascunho salvo!')">💾 Salvar rascunho</button>
+      <button type="button" class="btn-secondary" onclick="if(confirm('Cancelar?'))location.reload()">Cancelar</button>
+    </div>
+    <button type="button" class="btn-primary" onclick="submitForm()">Enviar Cadastro ✓</button>
+  </div></div>
+  </form>
+</div>
+
+<div class="modal-overlay" id="modal"><div class="modal-content"><div class="modal-icon">🎉</div><h3>Cadastro Enviado!</h3><p>Todas as regras foram atendidas. Confirmação por e-mail em até 48h.</p><button type="button" class="btn-primary" onclick="location.reload()" style="width:100%">Novo Cadastro</button></div></div>
+
+<div class="modal-overlay" id="video-modal" onclick="if(event.target===this)closeVideoModal()">
+  <div class="modal-content modal-video">
+    <div class="modal-video-header">
+      <h3 id="video-modal-title">Como enviar o documento</h3>
+      <button type="button" class="modal-close" onclick="closeVideoModal()" aria-label="Fechar">✕</button>
+    </div>
+    <div class="video-wrap"><iframe id="video-iframe" src="" title="Vídeo instrucional" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+  </div>
+</div>
+
+<script>
+/* ===== ESTADO ===== */
+let tipoAtual=null, docAtual=null, benefOK=false;
+let temANTT=false, anttObrigatoria=false, anttValor='', benefIsMei=false;
+let benef={cpf:'',idade:null,ear:false,ppd:false,doc:''};
+let veicCount=0, motCount=0;
+let veicState={}, motState={};
+let placasUsadas=[], chassisUsados=[], cnhUsadas=[];
+let ownerState={ownerSource:null,personType:null,autoDetectionError:'',reviewVisible:false,pfDocKind:'cnh',pfOcrCompleted:false,docUploaded:false,form:{},ok:false,lastDoc:'',lastName:'',lastUf:'',flowMode:'auto',manualTipo:'pf'};
+let propDocKind='cnh';
+const YT_DOC_VIDEO='5tR66s4SEjc';
+
+/* ===== VÍDEO MODAL ===== */
+function openVideoModal(e,title){
+  if(e)e.preventDefault();
+  const el=e&&e.currentTarget;
+  $('video-modal-title').textContent=(el&&el.dataset.title)||title||'Como enviar o documento';
+  $('video-iframe').src='https://www.youtube.com/embed/'+(el&&el.dataset.yt||YT_DOC_VIDEO)+'?autoplay=1';
+  $('video-modal').classList.add('show');
+}
+function closeVideoModal(){
+  $('video-modal').classList.remove('show');
+  $('video-iframe').src='';
+}
+
+/* ===== HELPERS ===== */
+const $=id=>document.getElementById(id);
+
+/* ===== REGRAS POR STEP (sempre visíveis) ===== */
+const STEP_RULES={
+  benef:[
+    {ref:'Regra 1.1',title:'PF — Apenas RG',items:[
+      {id:'b-rg-idade',t:'Idade <b>maior que 18 anos</b>.'},
+      {id:'b-rg-opera',t:'Sem CNH: beneficiário <b>não opera</b> veículos diretamente.'},
+      {id:'b-pis',t:'PIS/PASEP <b>válido</b>.'}
+    ]},
+    {ref:'Regra 1.2',title:'PF — CNH',items:[
+      {id:'b-cnh-validade',t:'CNH <b>na validade</b>.'},
+      {id:'b-cnh-ear',t:'Possuir <b>EAR</b> na CNH.'},
+      {id:'b-cnh-ppd',t:'CNH provisória (PPD) — <b>permitida</b>.'},
+      {id:'b-cnh-motorista',t:'Elegível para também atuar como <b>motorista</b> (CNH + EAR).'},
+      {id:'b-pis-cn',t:'PIS/PASEP <b>válido</b>.'},
+      {id:'b-antt-pf',t:'ANTT <b>obrigatória</b> para Pessoa Física.'}
+    ]},
+    {ref:'Regra 1.3',title:'PJ — CNPJ',items:[
+      {id:'b-cnpj-valido',t:'CNPJ <b>válido</b> na Receita Federal.'},
+      {id:'b-cnpj-sit',t:'Situação <b>ATIVA</b> (cód. 2 ou 5).'},
+      {id:'b-cnpj-cnae',t:'CNAE de transporte <b>permitido</b> (4930201/202/203).'},
+      {id:'b-antt-mei',t:'MEI → ANTT <b>opcional</b> (sem ANTT: só passeio).'},
+      {id:'b-antt-naomei',t:'Não-MEI → ANTT <b>obrigatória</b>.'}
+    ]},
+    {ref:'Regra 4',title:'Conferência de documento',items:[
+      {id:'b-ocr',t:'Dados conferem: <b>OCR × QRCode</b> (nº, nome, CPF).'}
+    ]}
+  ],
+  veic:[
+    {ref:'Regra 3',title:'Validação do veículo',items:[
+      {id:'v-idade',t:'Ano de fabricação — veículo com <b>até 20 anos</b>.'},
+      {id:'v-placa',t:'Placa e chassi <b>inéditos</b> neste fluxo (CIDA).'},
+      {id:'v-prop',t:'Proprietário no CRLV = beneficiário/motorista, ou <b>documento anexado</b> (terceiro).'},
+      {id:'v-antt',t:'Tipo de veículo compatível com <b>ANTT</b> do beneficiário.'},
+      {id:'v-milha',t:'Milha indicada automaticamente por <b>tipo + capacidade</b> (Regra 3.2).'},
+      {id:'v-operacao',t:'HUB/SVC ou UF de <b>operação</b> informado.'}
+    ]},
+    {ref:'Regra 3.3',title:'Itens de segurança',items:[
+      {id:'v-seguranca',t:'Veículos <b>maiores que VUC</b> exigem rastreador, sensores, protetor de degrau e telas de janela. Veículos menores <b>não possuem</b> esta exigência.'}
+    ]},
+    {ref:'Regra 3.4',title:'Perguntas finais',items:[
+      {id:'v-final',t:'Perguntas finais apresentadas apenas para operações <b>First Mile</b> e <b>Line Haul</b>.'},
+      {id:'v-sider',t:'Veículos First Mile e Line Haul <b>não podem</b> ser do tipo sider.'},
+      {id:'v-roletado',t:'Pergunta de veículo roletado — <b>informativa</b>.'}
+    ]},
+    {ref:'Regra 4',title:'Conferência CRLV',items:[
+      {id:'v-ocr',t:'Dados do CRLV conferem: <b>OCR × QRCode</b> (placa, RENAVAM, proprietário).'}
+    ]}
+  ],
+  mot:[
+    {ref:'Regra 2',title:'Validação do motorista',items:[
+      {id:'m-validade',t:'CNH <b>na validade</b>.'},
+      {id:'m-ear',t:'Possuir <b>EAR</b> (obs. "EAR"/"15").'},
+      {id:'m-ppd',t:'CNH provisória (PPD) — <b>permitida</b>.'},
+      {id:'m-duplicada',t:'Nº de registro CNH <b>inédito</b> no fluxo.'},
+      {id:'m-categoria',t:'Categoria CNH <b>compatível</b> com a tipologia dos veículos.'},
+      {id:'m-tox',t:'Exame toxicológico <b>válido</b> (categorias C/D/E).'}
+    ]},
+    {ref:'Regra 4',title:'Conferência CNH',items:[
+      {id:'m-ocr',t:'Dados da CNH conferem: <b>OCR × QR</b> (nº CNH, nome, CPF).'}
+    ]}
+  ],
+  prop:[
+    {ref:'Etapa 4',title:'Identificação do proprietário',items:[
+      {id:'p-match',t:'Correspondência com <b>motorista</b> ou <b>beneficiário</b> cadastrado. PF terceiro: anexar <b>CNH ou RG</b> do proprietário.'},
+      {id:'p-pf-dados',t:'Dados do proprietário PF <b>preenchidos e confirmados</b>.'},
+      {id:'p-ocr',t:'Documento do proprietário: <b>OCR</b> ou preenchimento manual.'}
+    ]}
+  ]
+};
+const ruleStatus={};
+
+function initRuleStatus(){
+  Object.values(STEP_RULES).flat().forEach(g=>g.items.forEach(it=>{ruleStatus[it.id]={s:'pending'}}));
+}
+function resetStepRules(step){STEP_RULES[step].forEach(g=>g.items.forEach(it=>{ruleStatus[it.id]={s:'pending'}}));renderStepRules(step);}
+function setRule(id,status,text){ruleStatus[id]={s:status,t:text||null};}
+function setRules(step,updates){Object.entries(updates).forEach(([id,v])=>{setRule(id,v.s||v,v.t)});renderStepRules(step);}
+function balloonVerdict(items){
+  const sts=items.map(it=>ruleStatus[it.id]?.s||'pending');
+  if(sts.includes('fail'))return'fail';
+  if(sts.every(s=>s==='na'))return'';
+  if(sts.includes('pending'))return'';
+  if(sts.includes('warn')&&!sts.includes('fail'))return'';
+  if(sts.every(s=>s==='pass'||s==='info'||s==='na'))return'pass';
+  return'';
+}
+function stepVerdict(step){
+  const items=STEP_RULES[step].flatMap(g=>g.items);
+  return balloonVerdict(items);
+}
+function renderRuleItems(items){
+  return `<ul class="rule-list">${items.map(it=>{
+    const st=ruleStatus[it.id]||{s:'pending'};
+    const ic={pass:'✅',fail:'❌',warn:'⚠️',info:'ℹ️',pending:'⏳',na:'—'}[st.s];
+    const txt=st.t||it.t;
+    return `<li class="rule-${st.s}"><span class="ri">${ic}</span><span>${txt}</span></li>`;
+  }).join('')}</ul>`;
+}
+function renderRuleSection(g){
+  return `<div class="step-rules-section"><div class="step-rules-section-head"><span class="rule-ref">${g.ref}</span><span class="rule-balloon-title">${g.title}</span></div>${renderRuleItems(g.items)}</div>`;
+}
+function renderStepRules(step){
+  const el=$('rules-'+step);if(!el)return;
+  const groups=STEP_RULES[step];
+  const stepTitles={benef:'Beneficiário',veic:'Veículos',mot:'Motoristas',prop:'Proprietário'};
+  let body='';
+  if(groups.length===1){
+    const g=groups[0],mid=Math.ceil(g.items.length/2);
+    body=`<div class="step-rules-section-head"><span class="rule-ref">${g.ref}</span><span class="rule-balloon-title">${g.title}</span></div><div class="step-rules-grid"><div class="step-rules-col">${renderRuleItems(g.items.slice(0,mid))}</div><div class="step-rules-col">${renderRuleItems(g.items.slice(mid))}</div></div>`;
+  }else{
+    const mid=Math.ceil(groups.length/2);
+    body=`<div class="step-rules-grid"><div class="step-rules-col">${groups.slice(0,mid).map(renderRuleSection).join('')}</div><div class="step-rules-col">${groups.slice(mid).map(renderRuleSection).join('')}</div></div>`;
+  }
+  el.innerHTML=`<div class="step-rules-card ${stepVerdict(step)}"><div class="step-rules-card-head"><span class="step-rules-card-title">📋 Regras de negócio — ${stepTitles[step]}</span></div>${body}</div>`;
+}
+function renderAllStepRules(){['benef','veic','mot','prop'].forEach(renderStepRules);}
+function applyBenefRuleContext(){
+  const pfOnly=['b-rg-idade','b-rg-opera','b-pis','b-pis-cn','b-cnh-validade','b-cnh-ear','b-cnh-ppd','b-cnh-motorista','b-antt-pf'];
+  const pjOnly=['b-cnpj-valido','b-cnpj-sit','b-cnpj-cnae','b-antt-mei','b-antt-naomei'];
+  const rgOnly=['b-rg-idade','b-rg-opera','b-pis-cn'];
+  const cnhOnly=['b-cnh-validade','b-cnh-ear','b-cnh-ppd','b-cnh-motorista','b-pis'];
+  Object.keys(ruleStatus).forEach(id=>{if(id.startsWith('b-'))ruleStatus[id]={s:'pending'};});
+  if(tipoAtual==='pj')pfOnly.forEach(id=>setRule(id,'na'));
+  else if(tipoAtual==='pf'){
+    pjOnly.forEach(id=>setRule(id,'na'));
+    if(docAtual==='rg')cnhOnly.forEach(id=>setRule(id,'na'));
+    else if(docAtual==='cnh')rgOnly.forEach(id=>setRule(id,'na'));
+    else{rgOnly.concat(cnhOnly).forEach(id=>setRule(id,'na'));}
+  }else{pfOnly.concat(pjOnly).forEach(id=>setRule(id,'na'));}
+  renderStepRules('benef');
+}
+
+function ruleBalloon(ref,title,rules,verdict){
+  const cls=verdict==='fail'?'fail':(verdict==='pass'?'pass':'');
+  const lis=rules.map(r=>{const ic={pass:'✅',fail:'❌',warn:'⚠️',info:'ℹ️'}[r.s];return `<li class="rule-${r.s}"><span class="ri">${ic}</span><span>${r.t}</span></li>`}).join('');
+  return `<div class="rule-balloon ${cls}"><div class="rule-balloon-head"><span class="rule-ref">${ref}</span><span class="rule-balloon-title">${title}</span></div><ul class="rule-list">${lis}</ul></div>`;
+}
+function setFname(container,sel,file){const up=container.querySelector(sel),nm=up.querySelector('.upload-filename');up.classList.add('has-file');nm.textContent='📎 '+file.files[0].name;nm.style.display='block';}
+
+/* ===== BLOCO DE MÉTODO (arquivo OU QR+foto) ===== */
+function methodBlock(prefix,icon,allowQr=true){
+  const qr=allowQr?`
+  <div class="upload-methods">
+    <button type="button" class="method-btn sel" data-m="file">📤 Enviar arquivo</button>
+    <button type="button" class="method-btn" data-m="qr">📷 Ler QR Code + Foto</button>
+  </div>
+  <div class="mb-qr" style="display:none">
+    <button type="button" class="qr-scan-btn">📷 Ler QR Code do documento</button>
+    <div class="qr-read status-box"></div>
+    <div class="qr-photo" style="display:none;margin-top:10px">
+      <div class="upload-area ${prefix}-photo-up"><div class="upload-icon">🖼️</div><p><strong>Anexar foto do documento</strong></p><p class="upload-hint">A qualidade da imagem será verificada</p><div class="upload-filename"></div></div>
+      <input type="file" class="upload-input ${prefix}-photo-file" accept=".jpg,.jpeg,.png">
+    </div>
+  </div>`:'';
+  return `
+  <a class="video-link" href="#" onclick="openVideoModal(event)">▶ Ver vídeo: como enviar o documento</a>
+  ${qr}
+  <div class="mb-file">
+    <div class="upload-area ${prefix}-up"><div class="upload-icon">${icon}</div><p><strong>Clique para enviar o arquivo</strong></p><p class="upload-hint">PDF, JPG ou PNG · Máx 5MB</p><div class="upload-filename"></div></div>
+    <input type="file" class="upload-input ${prefix}-file" accept=".pdf,.jpg,.jpeg,.png">
+  </div>`;
+}
+function setUploadQrMode(wrap,allowQr){
+  if(!wrap)return;
+  wrap.dataset.allowQr=allowQr?'1':'0';
+  const methods=wrap.querySelector('.upload-methods'),mbQr=wrap.querySelector('.mb-qr'),mbFile=wrap.querySelector('.mb-file');
+  if(methods)methods.style.display=allowQr?'flex':'none';
+  if(mbQr)mbQr.style.display='none';
+  if(mbFile)mbFile.style.display='block';
+}
+function bindUpload(container,prefix,processFn,allowQr=true){
+  setUploadQrMode(container,allowQr);
+  container.querySelectorAll('.method-btn').forEach(b=>b.addEventListener('click',()=>{
+    if(container.dataset.allowQr!=='1')return;
+    container.querySelectorAll('.method-btn').forEach(x=>x.classList.toggle('sel',x===b));
+    container.querySelector('.mb-file').style.display=b.dataset.m==='file'?'block':'none';
+    container.querySelector('.mb-qr').style.display=b.dataset.m==='qr'?'block':'none';
+  }));
+  const qrBtn=container.querySelector('.qr-scan-btn');
+  if(qrBtn)qrBtn.addEventListener('click',()=>{if(container.dataset.allowQr==='1')scanQR(container);});
+  const photo=container.querySelector('.'+prefix+'-photo-file');
+  const photoUp=container.querySelector('.'+prefix+'-photo-up');
+  if(photo&&photoUp)photoUp.addEventListener('click',()=>{if(container.dataset.allowQr==='1')photo.click();});
+  if(photo)photo.addEventListener('change',()=>{if(photo.files[0]&&container.dataset.allowQr==='1')validateQuality(container,prefix,photo,processFn);});
+  const file=container.querySelector('.'+prefix+'-file');
+  container.querySelector('.'+prefix+'-up').addEventListener('click',()=>file.click());
+  file.addEventListener('change',()=>{if(file.files[0]){setFname(container,'.'+prefix+'-up',file);processFn(container,file,'file',{});}});
+}
+function scanQR(container){
+  const box=container.querySelector('.qr-read');box.className='qr-read status-box loading show';
+  box.innerHTML='<div class="spinner"></div><div class="status-content"><strong>Lendo QR Code…</strong></div>';
+  setTimeout(()=>{
+    box.className='qr-read status-box ok show';
+    box.innerHTML='<span class="status-icon">🔎</span><div class="status-content"><strong>QR Code lido</strong><p>Dados capturados do QR. Agora anexe a foto do documento.</p></div>';
+    container.querySelector('.qr-photo').style.display='block';
+  },1300);
+}
+function validateQuality(container,prefix,photo,processFn){
+  const fn=photo.files[0].name.toLowerCase();
+  setFname(container,'.'+prefix+'-photo-up',photo);
+  const box=container.querySelector('.qr-read');box.className='qr-read status-box loading show';
+  box.innerHTML='<div class="spinner"></div><div class="status-content"><strong>Verificando qualidade da foto…</strong></div>';
+  setTimeout(()=>{
+    if(fn.includes('ruim')||fn.includes('borrada')){
+      box.className='qr-read status-box fail show';
+      box.innerHTML='<span class="status-icon">📵</span><div class="status-content"><strong>Qualidade insuficiente</strong><p>Imagem borrada/escura. Refaça com foco e boa iluminação.</p></div>';
+      container.querySelector('.'+prefix+'-photo-up').classList.remove('has-file');
+      return;
+    }
+    box.className='qr-read status-box ok show';
+    box.innerHTML='<span class="status-icon">✅</span><div class="status-content"><strong>Qualidade aprovada</strong><p>Comparando OCR da foto × QR Code × SERPRO…</p></div>';
+    processFn(container,photo,'qr',{divergente:fn.includes('divergente')});
+  },1500);
+}
+function resetMethod(container,prefix){
+  const allowQr=container.dataset.allowQr==='1';
+  setUploadQrMode(container,allowQr);
+  container.querySelectorAll('.method-btn').forEach(b=>b.classList.toggle('sel',b.dataset.m==='file'));
+  const box=container.querySelector('.qr-read');if(box){box.className='qr-read status-box';box.innerHTML='';}
+  const photo=container.querySelector('.qr-photo');if(photo)photo.style.display='none';
+  container.querySelectorAll('.upload-area').forEach(a=>a.classList.remove('has-file'));
+  container.querySelectorAll('.upload-filename').forEach(n=>{n.style.display='none';n.textContent=''});
+  container.querySelectorAll('.upload-input').forEach(i=>i.value='');
+}
+
+/* ===== MASKS ===== */
+function maskCNPJ(i){let v=i.value.replace(/\D/g,'').slice(0,14);v=v.replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d)/,'.$1/$2').replace(/(\d{4})(\d)/,'$1-$2');i.value=v}
+function maskCEP(i){let v=i.value.replace(/\D/g,'').slice(0,8);if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5);i.value=v}
+function maskPIS(i){let v=i.value.replace(/\D/g,'').slice(0,11);v=v.replace(/^(\d{3})(\d)/,'$1.$2').replace(/^(\d{3})\.(\d{5})(\d)/,'$1.$2.$3').replace(/\.(\d{2})(\d)/,'.$1-$2');i.value=v}
+function maskPhone(i){let v=i.value.replace(/\D/g,'').slice(0,11);if(v.length>6)v='('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);else if(v.length>2)v='('+v.slice(0,2)+') '+v.slice(2);i.value=v}
+function maskCPF(i){let v=i.value.replace(/\D/g,'').slice(0,11);v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');i.value=v}
+function onlyDigits(v){return String(v??'').replace(/\D/g,'')}
+function formatCPF(v){const d=onlyDigits(v);return d.length===11?d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'):String(v??'')}
+function formatCNPJ(v){const d=onlyDigits(v);return d.length===14?d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5'):String(v??'')}
+function benefDocDigits(){return tipoAtual==='pj'?onlyDigits($('rf-cnpj')?.textContent||$('cnpj')?.value):onlyDigits(benef.cpf)}
+function lastVeiculoCRLV(){
+  const keys=Object.keys(veicState).map(Number).sort((a,b)=>b-a);
+  for(const k of keys){const v=veicState[k];if(v&&(v.propDocDigits||v.crlvManual))return v;}
+  return null;
+}
+
+/* ===== TIPO ===== */
+function selectTipo(t){
+  tipoAtual=t;docAtual=null;benefOK=false;temANTT=false;anttObrigatoria=false;anttValor='';benefIsMei=false;
+  $('btn-pj').classList.toggle('selected',t==='pj');$('btn-pf').classList.toggle('selected',t==='pf');
+  $('sec-pj').classList.toggle('visible',t==='pj');$('sec-pf').classList.toggle('visible',t==='pf');
+  $('converge').classList.remove('visible');
+  ['opt-cnh','opt-rg'].forEach(id=>$(id).classList.remove('selected'));
+  $('sec-pfdoc').classList.remove('visible');$('pfdoc-card').classList.remove('show');$('elig-box').classList.remove('show','ok','no');
+  $('cnpj-card').classList.remove('show');applyBenefRuleContext();
+  $('pis-wrap').style.display = t==='pf'?'block':'none';
+  if(t==='pf'){anttObrigatoria=true;temANTT=true;}
+  ownerState.ok=false;ownerState.flowMode='auto';
+  applyBenefRuleContext();updateAnttLabel();refreshVeicCtx();tryAutoDetectOwner();updateStepper();
+}
+
+/* ===== PJ ===== */
+function consultarCNPJ(){
+  const i=$('cnpj'),v=i.value.replace(/\D/g,'');
+  $('cnpj-loading').classList.remove('show');$('cnpj-card').classList.remove('show');applyBenefRuleContext();i.classList.remove('success','error');
+  if(v.length<14){i.classList.add('error');alert('⚠️ CNPJ incompleto.');return}
+  $('cnpj-loading').classList.add('show');$('btn-cnpj').disabled=true;
+  setTimeout(()=>{
+    $('cnpj-loading').classList.remove('show');$('btn-cnpj').disabled=false;
+    let cen='ltda';
+    if(v==='00000000000000')cen='inv';else if(v==='11111111111111')cen='inativo';else if(v==='22222222222222')cen='cnae';else if(v==='33333333333333')cen='mei';
+    let mei=(cen==='mei'), cnae=(cen==='cnae')?'4711-3/02 (Comércio)':'4930-2/02 (Transporte)', loc=(cen==='cnae')?'Atividade secundária':'Atividade principal';
+    let nat=mei?'213-5 MEI':'206-2 Soc. Ltda', sit=(cen==='inativo')?'❌ BAIXADA (cód.8)':'✅ ATIVA (cód.2)';
+    $('rf-razao').textContent=mei?'JOSÉ DA SILVA (MEI)':'TRANSPORTES SILVA LTDA';
+    $('rf-cnpj').textContent=i.value;$('rf-sit').textContent=sit;$('rf-nat').textContent=nat;$('rf-cnae').textContent=cnae;$('rf-cnaeloc').textContent=loc;
+    $('cnpj-card').classList.add('show');
+    let fail=false;
+    const ru={};
+    if(cen==='inv'){ru['b-cnpj-valido']={s:'fail',t:'<b>CNPJ inválido</b> — não localizado na Receita.'};fail=true;}
+    else{
+      ru['b-cnpj-valido']={s:'pass',t:'CNPJ válido na Receita ✔'};
+      if(cen==='inativo'){ru['b-cnpj-sit']={s:'fail',t:'Situação <b>BAIXADA</b> — exigido código <b>2 ou 5</b>.'};fail=true;}
+      else ru['b-cnpj-sit']={s:'pass',t:'Situação <b>ATIVA</b> (cód. 2/5) ✔'};
+      if(cen==='cnae'){ru['b-cnpj-cnae']={s:'fail',t:'CNAE <b>não permitido</b>. Aceitos: 4930201/202/203.'};fail=true;}
+      else ru['b-cnpj-cnae']={s:'pass',t:'CNAE permitido (4930-2/02) ✔'};
+    }
+    if(!fail){
+      benefIsMei=mei;
+      anttObrigatoria=!mei;
+      temANTT=anttValor.length>0;
+      if(mei){
+        ru['b-antt-mei']={s:'info',t:'<b>MEI</b> → ANTT <b>opcional</b>. Sem ANTT opera só <b>passeio</b>; com ANTT, opera carga.'};
+        ru['b-antt-naomei']={s:'na'};
+      }else{
+        ru['b-antt-mei']={s:'na'};
+        ru['b-antt-naomei']={s:temANTT?'pass':'warn',t:temANTT?'Não-MEI com ANTT informada ✔':'<b>Não-MEI</b> → ANTT <b>obrigatória</b>. Informe para prosseguir.'};
+      }
+    }
+    applyBenefRuleContext();
+    setRules('benef',ru);
+    i.classList.add(fail?'error':'success');
+    benefOK=!fail;
+    if(!fail){$('converge').classList.add('visible');updateAnttLabel();}
+    refreshVeicCtx();tryAutoDetectOwner();updateStepper();
+  },1600);
+}
+
+/* ===== DOC PF ===== */
+function selectDoc(d){
+  docAtual=d;
+  $('opt-cnh').classList.toggle('selected',d==='cnh');$('opt-rg').classList.toggle('selected',d==='rg');
+  $('sec-pfdoc').classList.add('visible');
+  $('pfdoc-card').classList.remove('show');$('elig-box').classList.remove('show','ok','no');
+  if(d==='cnh'){$('pfdoc-ico').textContent='🪪';$('pfdoc-strong').textContent='Clique para enviar a CNH';$('pfdoc-label').innerHTML='Upload da CNH <span class="required-star">*</span> <span class="fake-tag">🔗 SERPRO + OCR/QR</span>';$('pfdoc-wrap').querySelector('.field-hint').innerHTML='Extrai CPF/nascimento. Teste nome: <b>vencida</b> · <b>semear</b> · <b>provisoria</b> · Foto QR: <b>ruim</b>=baixa qualidade · <b>divergente</b>=não bate c/ SERPRO';}
+  else{$('pfdoc-ico').textContent='📄';$('pfdoc-strong').textContent='Clique para enviar o RG';$('pfdoc-label').innerHTML='Upload do RG <span class="required-star">*</span> <span class="fake-tag">🔗 OCR</span>';$('pfdoc-wrap').querySelector('.field-hint').innerHTML='Extrai CPF/nascimento via OCR. Teste nome: <b>vencida</b> · <b>semear</b> · <b>provisoria</b>';$('pfdoc-loading').querySelector('strong').textContent='Lendo documento (OCR)…';}
+  setUploadQrMode($('pfdoc-wrap'),d==='cnh');
+  if(d==='cnh')$('pfdoc-loading').querySelector('strong').textContent='Lendo documento (OCR/QR + SERPRO)…';
+  resetMethod($('pfdoc-wrap'),'pf');
+  applyBenefRuleContext();
+}
+
+function procPFDoc(container,file,method,opts){
+  const fn=file.files[0].name.toLowerCase();
+  $('pfdoc-card').classList.remove('show');$('elig-box').classList.remove('show','ok','no');
+  $('pfdoc-loading').classList.add('show');
+  setTimeout(()=>{
+    $('pfdoc-loading').classList.remove('show');
+    const semear=fn.includes('semear'),prov=fn.includes('provisoria'),venc=fn.includes('vencida');
+    const idade=38;
+    benef={cpf:'123.456.789-00',idade,ear:!semear,ppd:prov,venc:docAtual==='cnh'&&venc,doc:docAtual};
+    let grid='';
+    if(docAtual==='cnh'){
+      $('pfdoc-cardh').textContent='✅ CNH — SERPRO / SENATRAN';
+      grid=`<div class="validated-item"><label>Nome</label><span>JOÃO CARLOS PEREIRA</span></div>
+      <div class="validated-item"><label>CPF (extraído)</label><span>123.456.789-00</span></div>
+      <div class="validated-item"><label>Validade</label><span>${venc?'10/01/2023 (vencida)':'22/08/2028'}</span></div>
+      <div class="validated-item"><label>Categoria</label><span>${prov?'B (ACC)':'E'}</span></div>
+      <div class="validated-item"><label>EAR</label><span>${semear?'NÃO':'SIM'}</span></div>
+      <div class="validated-item"><label>PPD</label><span>${prov?'SIM':'Não'}</span></div>`;
+    }else{
+      $('pfdoc-cardh').textContent='✅ RG — OCR';
+      grid=`<div class="validated-item"><label>Nome</label><span>JOÃO CARLOS PEREIRA</span></div>
+      <div class="validated-item"><label>CPF (extraído)</label><span>123.456.789-00</span></div>
+      <div class="validated-item"><label>Nascimento</label><span>${idade} anos</span></div>`;
+    }
+    $('pfdoc-grid').innerHTML=grid;$('pfdoc-card').classList.add('show');
+
+    let fail=false;
+    const ru={};
+    if(docAtual==='cnh'){
+      ru['b-ocr']={s:'pass',t:method==='qr'?'OCR × QR × SERPRO conferem (nº, nome, CPF) ✔':'Dados conferem com QR Code/SERPRO ✔'};
+      if(method==='qr'&&opts.divergente){ru['b-ocr']={s:'fail',t:'OCR da foto <b>diverge</b> do QR/SERPRO (nº/nome/CPF) — Regra 4.'};fail=true;}
+    }else{
+      ru['b-ocr']={s:'pass',t:'Dados extraídos via <b>OCR</b> ✔'};
+    }
+    if(docAtual==='rg'){
+      if(idade>18)ru['b-rg-idade']={s:'pass',t:`Idade <b>${idade}</b> (>18) ✔`};
+      else{ru['b-rg-idade']={s:'fail',t:`Idade <b>${idade}</b> — deve ser maior que 18.`};fail=true;}
+      ru['b-rg-opera']={s:'warn',t:'Sem CNH: beneficiário <b>não opera</b> veículos diretamente.'};
+      const pisRes=evalPisVal($('pf-pis')?.value.replace(/\D/g,'')||'');
+      if(pisRes){setPisRules(ru,pisRes.entry,'rg');if(pisRes.fail)fail=true;}
+    }else{
+      ru['b-cnh-validade']={s:benef.venc?'fail':'pass',t:benef.venc?'CNH <b>vencida</b>.':'CNH na validade ✔'};
+      ru['b-cnh-ear']={s:benef.ear?'pass':'fail',t:benef.ear?'Possui <b>EAR</b> ✔':'Sem <b>EAR</b>.'};
+      if(benef.venc||!benef.ear)fail=true;
+      ru['b-cnh-ppd']={s:'info',t:benef.ppd?'CNH <b>provisória (PPD)</b> — permitida.':'CNH definitiva (sem PPD).'};
+      ru['b-antt-pf']={s:'info',t:'ANTT <b>obrigatória</b> para PF.'};
+      const pisRes=evalPisVal($('pf-pis')?.value.replace(/\D/g,'')||'');
+      if(pisRes){setPisRules(ru,pisRes.entry,'cnh');if(pisRes.fail)fail=true;}
+      if(!fail){const elig=avaliarPodeVirar();if(!elig.ok)fail=true;}
+    }
+    applyBenefRuleContext();
+    setRules('benef',ru);
+    benefOK=!fail;
+    if(!fail){$('converge').classList.add('visible');updateAnttLabel();}
+    refreshVeicCtx();tryAutoDetectOwner();updateStepper();
+  },1500);
+}
+
+function avaliarPodeVirar(){
+  const ear=benef.ear,cnhOk=!benef.venc;
+  const ok=cnhOk&&ear;
+  setRule('b-cnh-motorista',ok?'pass':'fail',ok?'Elegível para também atuar como <b>motorista</b> ✔':'Indisponível: CNH na validade + EAR obrigatórios.');
+  renderStepRules('benef');
+  const arr=[
+    {s:cnhOk?'pass':'fail',t:'CNH na validade: '+(cnhOk?'✔':'reprovado (vencida)')},
+    {s:ear?'pass':'fail',t:'Possuir EAR: '+(ear?'✔':'reprovado')}
+  ];
+  const box=$('elig-box');box.classList.add('show');box.classList.toggle('ok',ok);box.classList.toggle('no',!ok);
+  let html='<ul class="rule-list" style="margin-top:8px">'+arr.map(r=>{const ic={pass:'✅',fail:'❌'}[r.s];return `<li class="rule-${r.s}"><span class="ri">${ic}</span><span>${r.t}</span></li>`}).join('')+'</ul>';
+  html+= ok? '<div class="elig-check"><input type="checkbox" id="elig-cb"><label for="elig-cb">✅ Habilitado — também atuará como motorista</label></div>'
+           : '<p style="font-size:12px;color:#e65100;margin-top:8px;font-weight:600">⚠️ Indisponível: CNH deve estar na validade e possuir EAR.</p>';
+  $('elig-content').innerHTML=html;
+  return {ok};
+}
+
+/* ===== PIS / CEP / ANTT ===== */
+function pisRuleEntry(s,t){return {s,t};}
+function setPisRules(ru,entry,doc){ru[doc==='rg'?'b-pis':'b-pis-cn']=entry;}
+function evalPisVal(pisVal){
+  if(pisVal.length>=11){
+    if(pisVal.charAt(0)==='0')return {entry:pisRuleEntry('fail','<b>PIS inválido</b> (dígito verificador).'),fail:true};
+    return {entry:pisRuleEntry('pass','PIS válido ✔'),fail:false};
+  }
+  if(pisVal.length>0)return {entry:pisRuleEntry('warn','PIS incompleto (11 dígitos).'),fail:true};
+  return null;
+}
+function validaPIS(){
+  const v=$('pf-pis').value.replace(/\D/g,'');if(!v||!docAtual)return;
+  const res=evalPisVal(v);if(!res)return;
+  const ru={};setPisRules(ru,res.entry,docAtual);
+  $('pf-pis').classList.toggle('error',res.fail);$('pf-pis').classList.toggle('success',!res.fail);
+  setRules('benef',ru);
+}
+function buscarCEP(){
+  const i=$('cep'),v=i.value.replace(/\D/g,'');
+  $('cep-loading').classList.remove('show');$('cep-error').classList.remove('show');$('endereco-fields').style.display='none';i.classList.remove('success','error');
+  if(v.length<8){alert('⚠️ CEP incompleto.');return}
+  $('cep-loading').classList.add('show');
+  setTimeout(()=>{
+    $('cep-loading').classList.remove('show');
+    if(v==='00000000'){$('cep-error').classList.add('show');i.classList.add('error');return}
+    i.classList.add('success');
+    $('logradouro').value='Av. Paulista';$('bairro').value='Bela Vista';$('cidade').value='São Paulo';$('estado').value='SP';
+    $('endereco-fields').style.display='block';$('numero').focus();
+  },1300);
+}
+function updateAnttLabel(){
+  const lab=$('antt-label'),div=$('antt-div-label'),hint=$('antt-hint');
+  if(tipoAtual==='pf'){div.textContent='Registro ANTT (obrigatório)';lab.innerHTML='Nº ANTT / RNTRC <span class="required-star">*</span> <span class="fake-tag">🔗 ANTT (armazenado)</span>';hint.innerHTML='Obrigatória para PF. O sistema apenas <b>armazena</b> (validação futura).';}
+  else if(benefIsMei){div.textContent='Registro ANTT (opcional — MEI)';lab.innerHTML='Nº ANTT / RNTRC <span class="fake-tag">🔗 ANTT (armazenado)</span>';hint.innerHTML='MEI: sem ANTT opera só <b>passeio</b>; com ANTT, opera <b>carga</b>. O sistema apenas <b>armazena</b> (validação futura).';}
+  else{div.textContent='Registro ANTT (obrigatório)';lab.innerHTML='Nº ANTT / RNTRC <span class="required-star">*</span> <span class="fake-tag">🔗 ANTT (armazenado)</span>';hint.innerHTML='Empresa não-MEI exige ANTT para prosseguir. O sistema apenas <b>armazena</b> (validação futura).';}
+}
+function onAnttInput(){anttValor=$('antt').value.trim();recomputeANTT();}
+function recomputeANTT(){
+  if(tipoAtual==='pf'){temANTT=true;}
+  else if(benefIsMei){temANTT=anttValor.length>0;}
+  else{temANTT=anttValor.length>0;}
+  const ru={};
+  if(tipoAtual==='pf'){
+    ru['b-antt-pf']={s:anttValor.length?'pass':'warn',t:anttValor.length?'ANTT informada ✔':'Informe a ANTT (obrigatória para PF).'};
+  }else if(benefIsMei){
+    ru['b-antt-mei']={s:temANTT?'pass':'info',t:temANTT?'MEI com ANTT informada ✔':'MEI sem ANTT → opera só <b>passeio</b>.'};
+  }else if(tipoAtual==='pj'){
+    ru['b-antt-naomei']={s:temANTT?'pass':'fail',t:temANTT?'Não-MEI com ANTT informada ✔':'<b>Não-MEI</b> exige ANTT para prosseguir.'};
+  }
+  if(Object.keys(ru).length)setRules('benef',ru);
+  else renderStepRules('benef');
+  refreshVeicCtx();
+}
+
+/* ===== CATÁLOGO VEÍCULOS ===== */
+const TIPO_INFO={PASSEIO:{cap:360,milhas:['LM']},FIORINO:{cap:650,milhas:['LM']},UTILITARIO:{cap:1000,milhas:['LM']},VAN:{cap:1500,milhas:['LM']},HR:{cap:1500,milhas:['FM','LM']},VUC:{cap:3500,milhas:['FM','LM','LH']},MEDIO:{cap:4500,milhas:['FM','LH']},TOCO:{cap:6000,milhas:['FM','LH']},TRUCK:{cap:12000,milhas:['FM','LH']},CARRETA:{cap:27000,milhas:['LH']},CAVALO:{cap:30000,milhas:['LH']}};
+const MILHA_LABEL={FM:'First Mile',LM:'Last Mile',LH:'Line Haul'};
+const MAIOR_QUE_VUC=['MEDIO','TOCO','TRUCK','CARRETA','CAVALO'];
+function veicBloqueadoAntt(tipo){return !temANTT&&tipo!=='PASSEIO';}
+function milhaExigePerguntasFinais(m){return m==='FM'||m==='LH';}
+const HUBS=['HUB Guarulhos/SP','SVC Campinas/SP','HUB Rio/RJ','SVC BH/MG','HUB Curitiba/PR'];
+const UFS=['SP','RJ','MG','PR','SC','RS','BA','PE','GO','DF'];
+function catForTipo(t){if(['CARRETA','CAVALO'].includes(t))return 'E';if(['HR','VUC','MEDIO','TOCO','TRUCK'].includes(t))return 'C';return 'B'}
+function catRank(c){return {B:1,C:2,D:3,E:4}[c]||0}
+
+function refreshVeicCtx(){
+  const c=$('veic-ctx');
+  if(!benefOK){c.className='status-box warn show';c.querySelector('strong').textContent='Conclua o beneficiário';c.querySelector('p').textContent='As regras de veículo dependem da ANTT.';$('veic-container').innerHTML='';veicState={};veicCount=0;return}
+  if(tipoAtual==='pj'&&!benefIsMei&&!temANTT){c.className='status-box fail show';c.querySelector('strong').textContent='Empresa sem ANTT';c.querySelector('p').innerHTML='Empresas <b>não-MEI</b> devem informar a ANTT para prosseguir.';$('veic-container').innerHTML='';veicState={};veicCount=0;return}
+  if(temANTT){c.className='status-box ok show';c.querySelector('strong').textContent='Beneficiário COM ANTT';c.querySelector('p').innerHTML='Veículos de <b>carga</b> liberados. <b>Passeio bloqueado.</b>';}
+  else{c.className='status-box warn show';c.querySelector('strong').textContent='Beneficiário SEM ANTT';c.querySelector('p').innerHTML='Somente <b>PASSEIO</b> (Last Mile).';}
+  if($('veic-container').children.length===0)addVeiculo(true);
+}
+
+/* ===== VEÍCULO ===== */
+function addVeiculo(first){
+  if(!benefOK){alert('⚠️ Conclua o beneficiário primeiro.');return}
+  veicCount++;const n=veicCount;
+  const div=document.createElement('div');div.className='multi-item';div.id='veic-'+n;div.dataset.idx=n;
+  div.innerHTML=`<div class="multi-item-header"><div class="multi-item-title"><div class="multi-item-num">${n}</div>Veículo #${n}</div>${first?'':`<button type="button" class="btn-remove" onclick="removeVeiculo(${n})">🗑 Remover</button>`}</div>
+  <div class="form-group" style="margin-bottom:14px">
+    <label>CRLV do veículo <span class="required-star">*</span> <span class="fake-tag">🔗 DETRAN/SERPRO</span></label>
+    ${methodBlock('v','📋')}
+    <span class="field-hint">Tipo/milha automáticos. Nome: <b>passeio/van/vuc/truck/carreta</b> · <b>velho</b> · <b>outrodono</b> · <b>manual</b> · <b>propcnpj</b> · <b>propmotorista</b> · <b>repetido</b> · Foto QR: <b>ruim</b> · <b>divergente</b></span>
+  </div>
+  <div class="status-box loading v-load"><div class="spinner"></div><div class="status-content"><strong>Lendo CRLV (DETRAN/OCR/QR)…</strong></div></div>
+  <div class="v-body" style="display:none"></div>`;
+  $('veic-container').appendChild(div);
+  bindUpload(div,'v',procCRLV);
+  $('btn-add-veic').classList.remove('visible');
+  if(!first)div.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function procCRLV(item,input,method,opts){
+  if(!input.files||!input.files[0])return;
+  const fn=input.files[0].name.toLowerCase();
+  item.querySelector('.v-load').classList.add('show');item.querySelector('.v-body').style.display='none';
+  const idx=parseInt(item.dataset.idx);
+  setTimeout(()=>{
+    item.querySelector('.v-load').classList.remove('show');
+    let tipo= temANTT?'TRUCK':'PASSEIO';
+    ['passeio','fiorino','utilitario','van','hr','vuc','medio','toco','truck','carreta','cavalo'].forEach(k=>{if(fn.includes(k))tipo=k.toUpperCase()});
+    if(fn.includes('utilitario'))tipo='UTILITARIO';
+    const velho=fn.includes('velho'),outroDono=fn.includes('outrodono'),repetido=fn.includes('repetido');
+    const ano= velho?(new Date().getFullYear()-22):2021;
+    const cap=TIPO_INFO[tipo].cap;
+    const placa= repetido?'ABC1D23':'XYZ'+(10+idx)+'A'+idx;
+    const chassi= repetido?'9BWZZZ000FIXO':'9BWZZ'+(40000+idx);
+    const propDoc= tipoAtual==='pj'?$('rf-cnpj').textContent:benef.cpf;
+    const prop= outroDono? '999.888.777-66 (terceiro)' : propDoc;
+    const propCnpj= fn.includes('propcnpj');
+    const propMotorista= fn.includes('propmotorista');
+    const crlvManual=fn.includes('manual');
+    let propDocDigits= crlvManual ? '' : onlyDigits(prop);
+    let propName= outroDono?'CARLOS EDUARDO SILVA':(tipoAtual==='pj'?$('rf-razao').textContent:'JOÃO CARLOS PEREIRA');
+    if(propCnpj){propDocDigits='12345678000199';propName='TRANSPORTES OUTRO LTDA';prop='12.345.678/0001-99';}
+    if(propMotorista){const m=Object.values(motState).find(x=>x);propDocDigits=m?onlyDigits(m.cpf):'98765432101';propName=m?(m.name||'MOTORISTA VINCULADO'):'MOTORISTA VINCULADO';prop=formatCPF(propDocDigits);}
+    veicState[idx]={tipo,cap,ano,placa,chassi,prop,outroDono,propDocDigits,propName,propUf:$('estado')?.value||'SP',milhas:TIPO_INFO[tipo].milhas.slice(),milhaSel:TIPO_INFO[tipo].milhas.length===1?TIPO_INFO[tipo].milhas[0]:'',operacao:'',sider:null,roletado:null,check:{},propDocUp:false,ok:false,method,divergente:!!(opts&&opts.divergente),crlvManual};
+    ownerState.flowMode=crlvManual?'manual':'auto';
+    renderVeicBody(item,idx);
+    evalVeic(idx);
+    tryAutoDetectOwner();
+  },1500);
+}
+
+function renderVeicBody(item,idx){
+  const s=veicState[idx],body=item.querySelector('.v-body');body.style.display='block';
+  const crlvCard=`<div class="validated-card show" style="margin-top:0;margin-bottom:14px"><div class="validated-card-header">✅ CRLV lido — DETRAN</div>
+      <div class="validated-grid">
+        <div class="validated-item"><label>Placa</label><span>${s.placa}</span></div>
+        <div class="validated-item"><label>Tipo (auto)</label><span>${s.tipo}</span></div>
+        <div class="validated-item"><label>Capacidade</label><span>${s.cap} kg</span></div>
+        <div class="validated-item"><label>Ano Fab.</label><span>${s.ano}</span></div>
+        <div class="validated-item"><label>Chassi</label><span>${s.chassi}</span></div>
+        <div class="validated-item"><label>Proprietário</label><span>${s.prop}</span></div>
+      </div>
+    </div>`;
+  if(veicBloqueadoAntt(s.tipo)){
+    const msg=benefIsMei
+      ?`Este beneficiário é <b>MEI sem ANTT</b> — somente veículos <b>PASSEIO</b> são permitidos. O CRLV indica tipo <b>${s.tipo}</b>.`
+      :`Beneficiário <b>sem ANTT</b> — somente veículos <b>PASSEIO</b> são permitidos. O CRLV indica tipo <b>${s.tipo}</b>.`;
+    body.innerHTML=crlvCard+`<div class="status-box fail show" style="margin-top:0"><span class="status-icon">❌</span><div class="status-content"><strong>Veículo não permitido</strong><p>${msg}</p></div></div>`;
+    return;
+  }
+  const multi=s.milhas.length>1;
+  const milhaHtml = s.milhas.length===1
+    ? `<span class="milha-badge">🚚 ${MILHA_LABEL[s.milhas[0]]}</span> <span style="font-size:11px;color:#999">(única compatível)</span>`
+    : `<div class="pill-row">${s.milhas.map(m=>`<button type="button" class="pill milha-pill" data-m="${m}" onclick="setMilha(${idx},'${m}')">${MILHA_LABEL[m]}</button>`).join('')}</div>`;
+  const exigeSeg=MAIOR_QUE_VUC.includes(s.tipo);
+  const segItens=['Rastreador','Sensores','Protetor de degrau','Telas de janela'];
+  const segHtml = exigeSeg?`<div class="form-group" style="margin-top:12px"><label>Itens de segurança (obrigatório — veículo maior que VUC) <span class="required-star">*</span></label><div class="check-list">${segItens.map(c=>`<label class="check-item"><input type="checkbox" onchange="setCheck(${idx},'${c}',this.checked)"> ${c}</label>`).join('')}</div></div>`:'';
+  const propHtml = s.outroDono?`<div class="form-group" style="margin-bottom:14px"><label>Documento do proprietário <span class="required-star">*</span> <span class="fake-tag">GR</span></label><div class="upload-area vp-up"><div class="upload-icon">📑</div><p><strong>Anexar documento do proprietário</strong></p><div class="upload-filename vp-name"></div></div><input type="file" class="upload-input vp-file" accept=".pdf,.jpg,.jpeg,.png"></div>`:'';
+  body.innerHTML=crlvCard+`
+    ${propHtml}
+    <div class="form-group"><label>Milha indicada automaticamente ${multi?'<span class="required-star">*</span>':''}</label>${milhaHtml}</div>
+    <div class="form-group" id="op-wrap-${idx}" style="margin-top:12px;display:none"></div>
+    ${segHtml}
+    <div id="final-wrap-${idx}" style="margin-top:12px"></div>`;
+  if(s.outroDono){const f=item.querySelector('.vp-file');item.querySelector('.vp-up').addEventListener('click',()=>f.click());f.addEventListener('change',()=>{if(f.files[0])propDocUp(idx,f)});}
+  if(s.milhaSel)renderOperacao(idx);
+  renderFinal(idx);
+}
+function propDocUp(idx,inp){const item=$('veic-'+idx);veicState[idx].propDocUp=true;item.querySelector('.vp-name').textContent='📎 '+inp.files[0].name;item.querySelector('.vp-name').style.display='block';item.querySelector('.vp-up').classList.add('has-file');evalVeic(idx)}
+function setMilha(idx,m){veicState[idx].milhaSel=m;const item=$('veic-'+idx);item.querySelectorAll('.milha-pill').forEach(p=>p.classList.toggle('sel',p.dataset.m===m));renderOperacao(idx);renderFinal(idx);evalVeic(idx)}
+function renderOperacao(idx){
+  const s=veicState[idx],w=$('op-wrap-'+idx);w.style.display='block';
+  if(s.milhaSel==='LH'){w.innerHTML=`<label>UF(s) de atendimento <span class="required-star">*</span> <span style="font-weight:400;color:#999;font-size:11px">(Line Haul)</span></label><select class="form-control" onchange="veicState[${idx}].operacao=this.value;evalVeic(${idx})"><option value="">Selecione…</option>${UFS.map(u=>`<option>${u}</option>`).join('')}</select>`;}
+  else{w.innerHTML=`<label>HUB/SVC onde deseja operar <span class="required-star">*</span> <span style="font-weight:400;color:#999;font-size:11px">(${MILHA_LABEL[s.milhaSel]})</span></label><select class="form-control" onchange="veicState[${idx}].operacao=this.value;evalVeic(${idx})"><option value="">Selecione…</option>${HUBS.map(h=>`<option>${h}</option>`).join('')}</select>`;}
+}
+function renderFinal(idx){
+  const s=veicState[idx],w=$('final-wrap-'+idx);
+  if(!milhaExigePerguntasFinais(s.milhaSel)){w.innerHTML='';s.sider=null;s.roletado=null;return}
+  w.innerHTML=`<label style="font-size:12px;font-weight:600;color:var(--dhl-gray)">Perguntas finais (First Mile / Line Haul)</label>
+    <div style="margin-top:8px"><span style="font-size:12px">O veículo é <b>sider</b>? <span class="required-star">*</span></span><div class="pill-row"><button type="button" class="pill sd-s" onclick="setSider(${idx},true)">Sim</button><button type="button" class="pill sd-n" onclick="setSider(${idx},false)">Não</button></div></div>
+    <div style="margin-top:10px"><span style="font-size:12px">O veículo é <b>roletado</b>? <span style="font-weight:400;color:#999;font-size:11px">(informativo)</span></span><div class="pill-row"><button type="button" class="pill rl-s" onclick="setRol(${idx},true)">Sim</button><button type="button" class="pill rl-n" onclick="setRol(${idx},false)">Não</button></div></div>`;
+}
+function setSider(idx,v){veicState[idx].sider=v;const it=$('veic-'+idx);it.querySelector('.sd-s').classList.toggle('sel',v);it.querySelector('.sd-s').classList.toggle('danger',v);it.querySelector('.sd-n').classList.toggle('sel',!v);evalVeic(idx)}
+function setRol(idx,v){veicState[idx].roletado=v;const it=$('veic-'+idx);it.querySelector('.rl-s').classList.toggle('sel',v);it.querySelector('.rl-n').classList.toggle('sel',!v);evalVeic(idx)}
+function setCheck(idx,c,v){veicState[idx].check[c]=v;evalVeic(idx)}
+
+function evalVeic(idx){
+  const s=veicState[idx],item=$('veic-'+idx);if(!item)return;
+  let fail=false;const ru={};
+  const segItens=['Rastreador','Sensores','Protetor de degrau','Telas de janela'];
+  const idadeV=new Date().getFullYear()-s.ano;
+  if(idadeV<=20)ru['v-idade']={s:'pass',t:`Ano ${s.ano} — ${idadeV} anos (≤20) ✔`};
+  else{ru['v-idade']={s:'fail',t:`Ano ${s.ano} — <b>${idadeV} anos</b> (máx 20).`};fail=true;}
+  const outChassi=chassisUsados.filter(c=>c.idx!==idx).map(c=>c.v);const outPlaca=placasUsadas.filter(c=>c.idx!==idx).map(c=>c.v);
+  if(outChassi.includes(s.chassi)||outPlaca.includes(s.placa)){ru['v-placa']={s:'fail',t:'Placa/chassi <b>já cadastrado</b> neste fluxo (CIDA).'};fail=true;}
+  else ru['v-placa']={s:'pass',t:'Placa e chassi inéditos no fluxo ✔'};
+  if(s.outroDono){if(s.propDocUp)ru['v-prop']={s:'pass',t:'Proprietário ≠ beneficiário — documento anexado ✔'};else{ru['v-prop']={s:'warn',t:'Proprietário ≠ beneficiário — <b>anexe o documento</b>.'};fail=true;}}
+  else ru['v-prop']={s:'pass',t:'Proprietário = beneficiário ✔ (CRLV).'};
+  if(temANTT){if(s.tipo==='PASSEIO'){ru['v-antt']={s:'fail',t:'Com ANTT <b>não</b> pode passeio.'};fail=true;}else ru['v-antt']={s:'pass',t:`Com ANTT: <b>${s.tipo}</b> permitido ✔`};}
+  else{if(s.tipo!=='PASSEIO'){ru['v-antt']={s:'fail',t:benefIsMei?'MEI sem ANTT: somente <b>PASSEIO</b> permitido.':'Sem ANTT só <b>PASSEIO</b> permitido.'};fail=true;}else ru['v-antt']={s:'pass',t:benefIsMei?'MEI sem ANTT: PASSEIO ✔':'Sem ANTT: PASSEIO ✔'};}
+  if(veicBloqueadoAntt(s.tipo)){
+    ru['v-milha']={s:'na',t:'Indisponível — veículo incompatível com ANTT do beneficiário.'};
+    ru['v-operacao']={s:'na',t:'Indisponível — veículo incompatível com ANTT do beneficiário.'};
+    ru['v-seguranca']={s:'na',t:'Indisponível — veículo incompatível com ANTT do beneficiário.'};
+    ru['v-final']={s:'na',t:'Indisponível — veículo incompatível com ANTT do beneficiário.'};
+    ru['v-sider']={s:'na',t:'Indisponível — veículo incompatível com ANTT do beneficiário.'};
+    ru['v-roletado']={s:'na',t:'Indisponível — veículo incompatível com ANTT do beneficiário.'};
+    if(s.method==='qr'){
+      if(s.divergente){ru['v-ocr']={s:'fail',t:'OCR da foto <b>diverge</b> do QR/SERPRO — Regra 4.'};fail=true;}
+      else ru['v-ocr']={s:'pass',t:'OCR × QR × SERPRO conferem (placa, RENAVAM, proprietário) ✔'};
+    }else ru['v-ocr']={s:'pass',t:'Dados do CRLV digital conferem com QR/SERPRO ✔'};
+    setRules('veic',ru);
+    chassisUsados=chassisUsados.filter(c=>c.idx!==idx);chassisUsados.push({idx,v:s.chassi});
+    placasUsadas=placasUsadas.filter(c=>c.idx!==idx);placasUsadas.push({idx,v:s.placa});
+    s.ok=false;updateStepper();return;
+  }
+  if(!s.milhaSel){ru['v-milha']={s:'warn',t:'Selecione a <b>milha</b>.'};fail=true;}
+  else ru['v-milha']={s:'info',t:`Milha: <b>${MILHA_LABEL[s.milhaSel]}</b> (Regra 3.2) ✔`};
+  if(s.milhaSel){if(!s.operacao){ru['v-operacao']={s:'warn',t:'Informe <b>HUB/SVC ou UF</b>.'};fail=true;}else ru['v-operacao']={s:'pass',t:`Operação: <b>${s.operacao}</b> ✔`};}
+  if(MAIOR_QUE_VUC.includes(s.tipo)){const todos=segItens.every(c=>s.check[c]);if(todos)ru['v-seguranca']={s:'pass',t:'Itens de segurança completos (veículo > VUC) ✔'};else{ru['v-seguranca']={s:'warn',t:'Marque <b>todos</b> os itens: rastreador, sensores, protetor de degrau e telas de janela.'};fail=true;}}
+  else ru['v-seguranca']={s:'info',t:'Veículo ≤ VUC — sem exigência de itens de segurança adicionais.'};
+  if(milhaExigePerguntasFinais(s.milhaSel)){
+    ru['v-final']={s:'pass',t:'Perguntas finais exibidas (<b>First Mile</b> / <b>Line Haul</b>) ✔'};
+    if(s.sider===null){ru['v-sider']={s:'warn',t:'Responda se o veículo é <b>sider</b>.'};fail=true;}
+    else if(s.sider){ru['v-sider']={s:'fail',t:'Veículo <b>sider</b> — não permitido em First Mile / Line Haul.'};fail=true;}
+    else ru['v-sider']={s:'pass',t:'Não é sider ✔'};
+    if(s.roletado===null)ru['v-roletado']={s:'info',t:'Roletado — pergunta <b>informativa</b> (não informado).'};
+    else ru['v-roletado']={s:'info',t:'Roletado: '+(s.roletado?'Sim':'Não')+' (informativo).'};
+  }else{
+    ru['v-final']={s:'na',t:'Aplicável somente a operações <b>First Mile</b> e <b>Line Haul</b>.'};
+    ru['v-sider']={s:'na',t:'Aplicável somente a operações <b>First Mile</b> e <b>Line Haul</b>.'};
+    ru['v-roletado']={s:'na',t:'Aplicável somente a operações <b>First Mile</b> e <b>Line Haul</b>.'};
+  }
+  if(s.method==='qr'){
+    if(s.divergente){ru['v-ocr']={s:'fail',t:'OCR da foto <b>diverge</b> do QR/SERPRO — Regra 4.'};fail=true;}
+    else ru['v-ocr']={s:'pass',t:'OCR × QR × SERPRO conferem (placa, RENAVAM, proprietário) ✔'};
+  }else ru['v-ocr']={s:'pass',t:'Dados do CRLV digital conferem com QR/SERPRO ✔'};
+  setRules('veic',ru);
+  chassisUsados=chassisUsados.filter(c=>c.idx!==idx);chassisUsados.push({idx,v:s.chassi});
+  placasUsadas=placasUsadas.filter(c=>c.idx!==idx);placasUsadas.push({idx,v:s.placa});
+  s.ok=!fail;if(!fail)$('btn-add-veic').classList.add('visible');
+  updateStepper();
+}
+function removeVeiculo(idx){if(!confirm('Remover Veículo #'+idx+'?'))return;const el=$('veic-'+idx);if(el)el.remove();delete veicState[idx];chassisUsados=chassisUsados.filter(c=>c.idx!==idx);placasUsadas=placasUsadas.filter(c=>c.idx!==idx);if(!Object.keys(veicState).length)resetStepRules('veic');tryAutoDetectOwner();updateStepper()}
+
+/* ===== MOTORISTAS ===== */
+function maxCatRequired(){let req='B';Object.values(veicState).forEach(v=>{if(v&&v.ok){const r=catForTipo(v.tipo);if(catRank(r)>catRank(req))req=r}});return req}
+function addMotorista(first){
+  motCount++;const n=motCount;
+  const div=document.createElement('div');div.className='multi-item';div.id='mot-'+n;div.dataset.idx=n;
+  div.innerHTML=`<div class="multi-item-header"><div class="multi-item-title"><div class="multi-item-num">${n}</div>Motorista #${n}</div>${first?'':`<button type="button" class="btn-remove" onclick="removeMotorista(${n})">🗑 Remover</button>`}</div>
+  <div class="form-group" style="margin-bottom:14px">
+    <label>CNH do motorista <span class="required-star">*</span> <span class="fake-tag">🔗 SERPRO + OCR/QR</span></label>
+    ${methodBlock('m','🪪')}
+    <span class="field-hint">Nome: <b>vencida</b> · <b>provisoria</b> · <b>semear</b> · <b>repetida</b> · <b>catb</b> · <b>toxvencido</b> · Foto QR: <b>ruim</b> · <b>divergente</b></span>
+  </div>
+  <div class="status-box loading m-load"><div class="spinner"></div><div class="status-content"><strong>Validando CNH no SERPRO…</strong></div></div>
+  <div class="m-body" style="display:none"></div>`;
+  $('mot-container').appendChild(div);
+  bindUpload(div,'m',procCNH);
+  $('btn-add-mot').classList.remove('visible');
+  if(!first)div.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function procCNH(item,input,method,opts){
+  if(!input.files||!input.files[0])return;
+  const fn=input.files[0].name.toLowerCase();
+  item.querySelector('.m-load').classList.add('show');item.querySelector('.m-body').style.display='none';
+  const idx=parseInt(item.dataset.idx);
+  setTimeout(()=>{
+    item.querySelector('.m-load').classList.remove('show');
+    const venc=fn.includes('vencida'),prov=fn.includes('provisoria'),semear=fn.includes('semear'),rep=fn.includes('repetida'),catb=fn.includes('catb'),toxv=fn.includes('toxvencido');
+    const cat=(prov||catb)?'B':'E';
+    const reg= rep?'01234567890':('0123456'+(7000+idx));
+    motState[idx]={cat,reg,cpf:rep?'11122233344':('9876543'+(2100+idx)),ear:!semear,ppd:prov,venc,tox:(toxv?'2023-01-01':''),ok:false,method,divergente:!!(opts&&opts.divergente),name:'MOTORISTA '+idx};
+    const toxField=['C','D','E'].includes(cat)?`<div class="form-group"><label>Exame Toxicológico — vencimento <span class="required-star">*</span> <span style="font-weight:400;color:#999;font-size:11px">(obrigatório cat. C/D/E)</span></label><input type="date" class="form-control" value="${toxv?'2023-01-01':''}" onchange="motState[${idx}].tox=this.value;evalMot(${idx})"></div>`:'';
+    item.querySelector('.m-body').style.display='block';
+    item.querySelector('.m-body').innerHTML=`
+      <div class="validated-card show" style="margin-top:0;margin-bottom:14px"><div class="validated-card-header">✅ CNH — SERPRO/SENATRAN</div>
+        <div class="validated-grid">
+          <div class="validated-item"><label>Nome</label><span>MOTORISTA ${idx}</span></div>
+          <div class="validated-item"><label>Nº CNH</label><span>${reg}</span></div>
+          <div class="validated-item"><label>Categoria</label><span>${cat}${prov?' (ACC)':''}</span></div>
+          <div class="validated-item"><label>Validade</label><span>${venc?'10/01/2023':'22/08/2028'}</span></div>
+          <div class="validated-item"><label>EAR</label><span>${semear?'NÃO':'SIM'}</span></div>
+          ${prov?'<div class="validated-item"><label>PPD</label><span>SIM</span></div>':''}
+        </div>
+      </div>
+      ${toxField}
+      <div class="section-divider"><span>ANTT do motorista (opcional, 1+)</span></div>
+      <div class="antt-mini"><input type="text" class="form-control" id="mantt-${idx}" placeholder="RNTRC do motorista"><button type="button" class="btn-buscar" onclick="addMantt(${idx})">+ Add</button></div>
+      <div id="mantt-list-${idx}" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+      <div class="section-divider"><span>Contato</span></div>
+      <div class="form-row two"><div class="form-group"><label>Telefone <span class="required-star">*</span></label><input type="text" class="form-control" placeholder="(11) 99999-9999" maxlength="15" oninput="maskPhone(this)"></div><div class="form-group"><label>E-mail</label><input type="email" class="form-control" placeholder="motorista@email.com"></div></div>`;
+    evalMot(idx);tryAutoDetectOwner();
+  },1900);
+}
+function addMantt(idx){const i=$('mantt-'+idx);if(!i.value.trim())return;const tag=document.createElement('span');tag.className='milha-badge';tag.style.cssText='background:#E3F2FD;color:#1565C0';tag.textContent='🚛 '+i.value.trim();$('mantt-list-'+idx).appendChild(tag);i.value=''}
+
+function evalMot(idx){
+  const s=motState[idx],item=$('mot-'+idx);if(!item)return;
+  let fail=false;const ru={};
+  if(s.venc){ru['m-validade']={s:'fail',t:'CNH <b>vencida</b>.'};fail=true;}
+  else ru['m-validade']={s:'pass',t:'CNH na validade ✔'};
+  if(s.ear)ru['m-ear']={s:'pass',t:'Possui <b>EAR</b> ✔'};else{ru['m-ear']={s:'fail',t:'Sem <b>EAR</b> (obs. "EAR"/"15").'};fail=true;}
+  ru['m-ppd']={s:'info',t:s.ppd?'CNH <b>provisória (PPD)</b> — permitida.':'CNH definitiva (sem PPD).'};
+  const dup=cnhUsadas.filter(c=>c.idx!==idx).map(c=>c.v).includes(s.reg);
+  if(dup){ru['m-duplicada']={s:'fail',t:'Nº CNH <b>já cadastrado</b> no fluxo.'};fail=true;}
+  else ru['m-duplicada']={s:'pass',t:'Registro CNH inédito ✔'};
+  const reqCat=maxCatRequired();
+  if(catRank(s.cat)>=catRank(reqCat))ru['m-categoria']={s:'pass',t:`Categoria <b>${s.cat}</b> compatível (req. ${reqCat}) ✔`};
+  else{ru['m-categoria']={s:'fail',t:`Categoria <b>${s.cat}</b> insuficiente — exige <b>${reqCat}</b>.`};fail=true;}
+  if(['C','D','E'].includes(s.cat)){
+    if(!s.tox){ru['m-tox']={s:'warn',t:'Informe o <b>vencimento do toxicológico</b> (cat. C/D/E).'};fail=true;}
+    else if(new Date(s.tox)<new Date()){ru['m-tox']={s:'fail',t:'Toxicológico <b>vencido</b>.'};fail=true;}
+    else ru['m-tox']={s:'pass',t:'Toxicológico válido ✔'};
+  }else ru['m-tox']={s:'na',t:'Aplicável somente a categorias C/D/E.'};
+  if(s.method==='qr'){
+    if(s.divergente){ru['m-ocr']={s:'fail',t:'OCR da foto <b>diverge</b> do QR/SERPRO — Regra 4.'};fail=true;}
+    else ru['m-ocr']={s:'pass',t:'OCR × QR Code conferem (nº CNH, nome, CPF) ✔'};
+  }else ru['m-ocr']={s:'pass',t:'Dados da CNH digital conferem com QR/SERPRO ✔'};
+  setRules('mot',ru);
+  cnhUsadas=cnhUsadas.filter(c=>c.idx!==idx);cnhUsadas.push({idx,v:s.reg});
+  s.ok=!fail;if(!fail)$('btn-add-mot').classList.add('visible');
+  updateStepper();
+}
+function removeMotorista(idx){if(!confirm('Remover Motorista #'+idx+'?'))return;const el=$('mot-'+idx);if(el)el.remove();delete motState[idx];cnhUsadas=cnhUsadas.filter(c=>c.idx!==idx);if(!Object.keys(motState).length)resetStepRules('mot');tryAutoDetectOwner();updateStepper()}
+
+/* ===== PROPRIETÁRIO ===== */
+function ownerSourceLabel(s){
+  return {DRIVER:'Motorista cadastrado',BENEFICIARY:'Beneficiário cadastrado',OTHER:'Sem correspondência em cadastros existentes'}[s]||'';
+}
+function ownerFlowMsg(){
+  const o=ownerState;
+  if(o.ownerSource==='OTHER'&&o.personType==='PF')return 'Documento adicional do proprietário é obrigatório.';
+  if(o.ownerSource==='OTHER'&&o.personType==='PJ')return 'Fluxo de CNPJ existente será reaproveitado com os dados do CRLV.';
+  return 'Os dados abaixo foram reaproveitados automaticamente.';
+}
+function hideAllPropPanels(){
+  $('prop-error').classList.remove('show');$('prop-wait').classList.remove('show');
+  $('prop-auto-wrap').style.display='none';$('prop-detected').style.display='none';
+  $('prop-pj-summary').style.display='none';$('prop-pf-upload').style.display='none';
+  $('prop-pf-summary').style.display='none';$('prop-manual-wrap').style.display='none';
+}
+function selectPropManualTipo(t){
+  ownerState.manualTipo=t;ownerState.personType=t==='pj'?'PJ':'PF';
+  ownerState.ownerSource='MANUAL';ownerState.ok=false;ownerState.reviewVisible=false;
+  ownerState.pfOcrCompleted=false;ownerState.docUploaded=false;
+  $('prop-man-pf').classList.toggle('selected',t==='pf');$('prop-man-pj').classList.toggle('selected',t==='pj');
+  $('prop-manual-pj').style.display=t==='pj'?'block':'none';
+  $('prop-pf-upload').style.display=t==='pf'?'block':'none';
+  $('prop-pf-summary').style.display='none';$('prop-pf-form').style.display='none';
+  if(t==='pf'){
+    ownerState.form={cpf:'',rg:'',vehicleUf:ownerState.lastUf||'SP',ownerName:'',birthDate:'',motherName:'',cellphone:''};
+    resetMethod($('prop-doc-wrap'),'prop');
+    setRules('prop',{'p-match':{s:'na'},'p-pf-dados':{s:'pending'},'p-ocr':{s:'warn',t:'Anexe o documento do proprietário.'}});
+  }else{
+    setRules('prop',{'p-match':{s:'na'},'p-pf-dados':{s:'na'},'p-ocr':{s:'na'}});
+  }
+  $('prop-badge').textContent='Envio manual';updateStepper();
+}
+function renderManualOwnerUI(){
+  hideAllPropPanels();
+  $('prop-manual-wrap').style.display='block';
+  selectPropManualTipo(ownerState.manualTipo||'pf');
+}
+function renderPropPjSummary(manual,confirmed){
+  $('prop-manual-wrap').style.display='none';
+  $('prop-auto-wrap').style.display='block';
+  $('prop-detected').style.display=manual?'none':'block';
+  $('prop-pj-summary').style.display='block';
+  $('prop-pj-cnpj').textContent=formatCNPJ(ownerState.form.cnpj);
+  $('prop-pj-nome').textContent=ownerState.form.companyName;
+  $('prop-pj-actions').style.display=confirmed?'none':'block';
+  $('prop-badge').textContent=confirmed?(manual?'PJ manual ✓':'PJ identificado ✓'):'PJ identificado';
+  if(confirmed){
+    ownerState.ok=true;
+    setRules('prop',{'p-match':{s:manual?'na':'pass',t:manual?null:'Correspondência: <b>'+ownerSourceLabel(ownerState.ownerSource)+'</b> ✔'},'p-pf-dados':{s:'na'},'p-ocr':{s:'na'}});
+  }
+  updateStepper();
+}
+function propPjConcluir(){
+  if(!ownerState.form.cnpj||!ownerState.form.companyName){alert('⚠️ Dados do proprietário PJ incompletos.');return}
+  renderPropPjSummary(ownerState.ownerSource==='MANUAL',true);
+}
+function propManualPjConcluir(){
+  const cnpj=onlyDigits($('prop-man-cnpj').value),razao=$('prop-man-razao').value.trim();
+  if(cnpj.length!==14){alert('⚠️ Informe um CNPJ válido (14 dígitos).');return}
+  if(!razao){alert('⚠️ Preencha a razão social.');return}
+  ownerState.form={cnpj,companyName:razao};ownerState.personType='PJ';ownerState.ownerSource='MANUAL';ownerState.manualTipo='pj';
+  renderPropPjSummary(true,true);
+}
+function applyDriverOwner(d){
+  ownerState.form={cpf:onlyDigits(d.cpf)||ownerState.lastDoc,rg:'MG-12.345.678',vehicleUf:ownerState.lastUf,ownerName:d.name||ownerState.lastName,birthDate:'1985-03-15',motherName:'MARIA DA SILVA',cellphone:'11988776655'};
+}
+function applyBeneficiaryOwner(){
+  const bDoc=benefDocDigits();
+  if(bDoc.length===14){
+    ownerState.form={cnpj:bDoc,companyName:tipoAtual==='pj'?$('rf-razao').textContent:ownerState.lastName};
+    return;
+  }
+  ownerState.form={cpf:bDoc||ownerState.lastDoc,rg:'SP-98.765.432',vehicleUf:ownerState.lastUf||$('estado')?.value||'SP',ownerName:tipoAtual==='pf'?'JOÃO CARLOS PEREIRA':ownerState.lastName,birthDate:'1986-07-20',motherName:'ANA PAULA SANTOS',cellphone:onlyDigits($('cel1')?.value)||'11999887766'};
+}
+function applyPjFromCrlv(){
+  ownerState.form={cnpj:ownerState.lastDoc,companyName:ownerState.lastName};
+}
+function resetPfPath(){
+  ownerState.form={cpf:ownerState.lastDoc,rg:'',vehicleUf:ownerState.lastUf,ownerName:ownerState.lastName,birthDate:'',motherName:'',cellphone:''};
+  ownerState.reviewVisible=false;ownerState.pfOcrCompleted=false;ownerState.docUploaded=false;
+}
+function tryAutoDetectOwner(){
+  hideAllPropPanels();
+  const veic=lastVeiculoCRLV();
+  if(!veic){$('prop-wait').classList.add('show');$('prop-badge').textContent='Aguardando CRLV';resetStepRules('prop');updateStepper();return}
+  ownerState.lastUf=veic.propUf||'SP';
+  if(veic.crlvManual){
+    ownerState.flowMode='manual';
+    if(ownerState.ok&&ownerState.personType==='PJ'&&ownerState.form.cnpj){
+      renderPropPjSummary(ownerState.ownerSource==='MANUAL',true);
+      return;
+    }
+    ownerState.ok=false;ownerState.reviewVisible=false;
+    ownerState.pfOcrCompleted=false;ownerState.docUploaded=false;
+    renderManualOwnerUI();
+    setRules('prop',{'p-match':{s:'na'},'p-pf-dados':{s:'pending'},'p-ocr':{s:'warn',t:'Anexe o documento do proprietário.'}});
+    $('prop-badge').textContent='Manual (CRLV)';updateStepper();return;
+  }
+  ownerState.flowMode='auto';
+  ownerState.ok=false;ownerState.reviewVisible=false;ownerState.pfOcrCompleted=false;ownerState.docUploaded=false;
+  ownerState.ownerSource=null;ownerState.personType=null;ownerState.autoDetectionError='';
+  ownerState.lastDoc=veic.propDocDigits||'';ownerState.lastName=veic.propName||'';
+  if(!ownerState.lastDoc){
+    ownerState.autoDetectionError='Não foi possível identificar o CPF/CNPJ do proprietário no CRLV. Reenvie o documento ou use <b>manual</b> no nome do arquivo.';
+    $('prop-error-msg').textContent=ownerState.autoDetectionError;$('prop-error').classList.add('show');
+    setRules('prop',{'p-match':{s:'warn',t:'Não foi possível identificar o proprietário no CRLV. Use cadastro manual.'}});
+    $('prop-badge').textContent='Não localizado';updateStepper();return;
+  }
+  const matchedDriver=Object.values(motState).find(d=>d&&onlyDigits(d.cpf)===ownerState.lastDoc);
+  if(matchedDriver){ownerState.ownerSource='DRIVER';ownerState.personType='PF';applyDriverOwner(matchedDriver);renderOwnerUI();return}
+  const bDoc=benefDocDigits();
+  if(bDoc&&bDoc===ownerState.lastDoc){ownerState.ownerSource='BENEFICIARY';ownerState.personType=ownerState.lastDoc.length===14?'PJ':'PF';applyBeneficiaryOwner();renderOwnerUI();return}
+  if(ownerState.lastDoc.length===14){ownerState.ownerSource='OTHER';ownerState.personType='PJ';applyPjFromCrlv();renderOwnerUI();return}
+  if(ownerState.lastDoc.length===11){ownerState.ownerSource='OTHER';ownerState.personType='PF';resetPfPath();renderOwnerUI();return}
+  ownerState.autoDetectionError='Não foi possível identificar um CPF/CNPJ válido no CRLV. Reenvie o documento ou use <b>manual</b> no nome do arquivo.';
+  $('prop-error-msg').textContent=ownerState.autoDetectionError;$('prop-error').classList.add('show');
+  setRules('prop',{'p-match':{s:'warn',t:'CPF/CNPJ inválido no CRLV. Use cadastro manual.'}});
+  $('prop-badge').textContent='Não localizado';updateStepper();
+}
+function renderOwnerUI(){
+  const o=ownerState;hideAllPropPanels();
+  $('prop-auto-wrap').style.display='block';
+  if(o.autoDetectionError){$('prop-error-msg').textContent=o.autoDetectionError;$('prop-error').classList.add('show');updateStepper();return}
+  $('prop-detected').style.display='block';
+  $('prop-src').textContent=ownerSourceLabel(o.ownerSource);
+  $('prop-ptype').textContent=o.personType==='PJ'?'Pessoa jurídica':'Pessoa física';
+  $('prop-doc-crlv').textContent=o.personType==='PJ'?formatCNPJ(o.lastDoc):formatCPF(o.lastDoc);
+  $('prop-flow-msg').textContent=ownerFlowMsg();
+  if(o.personType==='PJ'){
+    $('prop-pj-cnpj').textContent=formatCNPJ(o.form.cnpj);$('prop-pj-nome').textContent=o.form.companyName;
+    if(o.ok){renderPropPjSummary(o.ownerSource==='MANUAL',true);return}
+    $('prop-pj-summary').style.display='block';
+    $('prop-pj-actions').style.display='block';
+    $('prop-badge').textContent='PJ identificado';
+    setRules('prop',{'p-match':{s:'pass',t:'Correspondência: <b>'+ownerSourceLabel(o.ownerSource)+'</b> ✔'},'p-pf-dados':{s:'na'},'p-ocr':{s:'na'}});
+    updateStepper();return;
+  }
+  const showSummary=o.ownerSource!=='OTHER'||o.reviewVisible;
+  if(showSummary){
+    $('prop-pf-summary').style.display='block';
+    $('prop-edit-wrap').style.display=(o.ownerSource==='OTHER'||o.ownerSource==='MANUAL')&&o.personType==='PF'?'block':'none';
+    $('prop-sum-cpf').textContent=formatCPF(o.form.cpf);$('prop-sum-rg').textContent=o.form.rg||'—';
+    $('prop-sum-nome').textContent=o.form.ownerName;
+    $('prop-sum-nasc').textContent=o.form.birthDate?o.form.birthDate.split('-').reverse().join('/'):'—';
+    $('prop-sum-mae').textContent=o.form.motherName;$('prop-sum-cel').textContent=maskPhoneDisplay(o.form.cellphone);
+    $('prop-badge').textContent='PF identificado';
+    setRules('prop',{'p-match':{s:'pass',t:'Dados reaproveitados de <b>'+ownerSourceLabel(o.ownerSource)+'</b> ✔'},'p-pf-dados':{s:'pass',t:'Dados do proprietário confirmados ✔'},'p-ocr':{s:'na'}});
+    o.ok=true;updateStepper();return;
+  }
+  $('prop-pf-upload').style.display='block';$('prop-badge').textContent='Doc. obrigatório';
+  setRules('prop',{'p-match':{s:'warn',t:'Sem correspondência em cadastros existentes. PF terceiro: anexe <b>CNH ou RG</b>.'},'p-pf-dados':{s:'pending'},'p-ocr':{s:'pending'}});
+  updateStepper();
+}
+function maskPhoneDisplay(v){
+  const d=onlyDigits(v);if(d.length===11)return d.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
+  if(d.length===10)return d.replace(/(\d{2})(\d{4})(\d{4})/,'($1) $2-$3');return String(v??'');
+}
+function selectPropDoc(d){
+  propDocKind=d;ownerState.pfDocKind=d;
+  $('prop-opt-cnh').classList.toggle('selected',d==='cnh');$('prop-opt-rg').classList.toggle('selected',d==='rg');
+  if(d==='cnh'){$('prop-doc-ico').textContent='🪪';$('prop-doc-strong').textContent='Clique para enviar a CNH';$('prop-doc-label').innerHTML='Upload da CNH <span class="required-star">*</span> <span class="fake-tag">🔗 OCR</span>';}
+  else{$('prop-doc-ico').textContent='📄';$('prop-doc-strong').textContent='Clique para enviar o RG';$('prop-doc-label').innerHTML='Upload do RG <span class="required-star">*</span> <span class="fake-tag">🔗 OCR</span>';}
+  $('prop-pf-form').style.display='none';ownerState.pfOcrCompleted=false;ownerState.docUploaded=false;
+  setUploadQrMode($('prop-doc-wrap'),d==='cnh');
+  resetMethod($('prop-doc-wrap'),'prop');
+}
+function procPropDoc(container,file,method,opts){
+  const fn=file.files[0].name.toLowerCase();
+  $('prop-ocr-load').classList.add('show');$('prop-pf-form').style.display='none';ownerState.pfOcrCompleted=false;
+  setTimeout(()=>{
+    $('prop-ocr-load').classList.remove('show');
+    ownerState.docUploaded=true;
+    const semOcr=fn.includes('semocr');
+    ownerState.form.cpf=ownerState.flowMode==='manual'||!ownerState.lastDoc?'':ownerState.lastDoc;
+    ownerState.form.rg=semOcr?'':(propDocKind==='cnh'?'MG-45.678.901':'SP-12.345.678');
+    ownerState.form.ownerName=semOcr?(ownerState.lastName||''):'CARLOS EDUARDO SILVA';
+    ownerState.form.birthDate=semOcr?'':'1988-11-22';
+    ownerState.form.motherName=semOcr?'':'ROSA MARIA SILVA';
+    ownerState.form.cellphone='';ownerState.form.vehicleUf=ownerState.lastUf;
+    $('prop-cpf').value=formatCPF(ownerState.form.cpf);$('prop-rg').value=ownerState.form.rg;
+    $('prop-nome').value=ownerState.form.ownerName;
+    $('prop-nasc').value=ownerState.form.birthDate;$('prop-mae').value=ownerState.form.motherName;$('prop-cel').value='';
+    ownerState.pfOcrCompleted=true;$('prop-pf-form').style.display='block';
+    const ru={'p-ocr':{s:semOcr?'warn':'pass',t:semOcr?'OCR não leu os dados — <b>preencha manualmente</b>.':'Dados extraídos do documento (OCR) ✔'},'p-match':{s:'pass',t:'PF terceiro: documento <b>anexado</b> ✔'}};
+    setRules('prop',ru);
+  },1500);
+}
+function propContinuar(){
+  ownerState.form.cpf=onlyDigits($('prop-cpf').value);ownerState.form.rg=$('prop-rg').value.trim();
+  ownerState.form.ownerName=$('prop-nome').value.trim();
+  ownerState.form.birthDate=$('prop-nasc').value;ownerState.form.motherName=$('prop-mae').value.trim();
+  ownerState.form.cellphone=onlyDigits($('prop-cel').value);
+  if(!ownerState.docUploaded||!ownerState.pfOcrCompleted){alert('⚠️ Anexe o documento e conclua a extração (OCR) antes de continuar.');return}
+  const f=ownerState.form,req=['cpf','rg','ownerName','birthDate','motherName','cellphone'];
+  for(const k of req){if(!f[k]){alert('⚠️ Preencha todos os campos obrigatórios, incluindo o celular.');return}}
+  if(f.cpf.length!==11){alert('⚠️ CPF inválido.');return}
+  if(f.cellphone.length<10){alert('⚠️ Informe um celular válido com DDD.');return}
+  if(ownerState.flowMode!=='manual'&&ownerState.lastDoc&&f.cpf!==ownerState.lastDoc){alert('⚠️ O CPF do documento anexado deve ser o mesmo CPF identificado no CRLV.');return}
+  ownerState.reviewVisible=true;ownerState.ok=true;
+  if(ownerState.flowMode==='manual'){
+    ownerState.ownerSource='MANUAL';
+    $('prop-manual-wrap').style.display='block';
+    $('prop-pf-upload').style.display='none';$('prop-pf-summary').style.display='block';
+    $('prop-sum-cpf').textContent=formatCPF(f.cpf);$('prop-sum-rg').textContent=f.rg;
+    $('prop-sum-nome').textContent=f.ownerName;$('prop-sum-nasc').textContent=f.birthDate?f.birthDate.split('-').reverse().join('/'):'—';
+    $('prop-sum-mae').textContent=f.motherName;$('prop-sum-cel').textContent=maskPhoneDisplay(f.cellphone);
+    $('prop-edit-wrap').style.display='block';$('prop-badge').textContent='PF manual ✓';
+    setRules('prop',{'p-match':{s:'na'},'p-pf-dados':{s:'pass',t:'Dados do proprietário <b>preenchidos</b> via envio manual ✔'},'p-ocr':{s:'pass'}});
+  }else renderOwnerUI();
+  updateStepper();
+}
+function propEditar(){
+  ownerState.reviewVisible=false;ownerState.ok=false;
+  if(ownerState.flowMode==='manual'){selectPropManualTipo('pf');return}
+  renderOwnerUI();
+}
+
+/* ===== STEPPER ===== */
+function veicCountOK(){return Object.values(veicState).filter(v=>v&&v.ok).length}
+function propOK(){return ownerState.ok}
+function motCountOK(){return Object.values(motState).filter(v=>v&&v.ok).length}
+function updateStepper(){
+  const s1=$('step-1'),s2=$('step-2'),s3=$('step-3'),s4=$('step-4'),c1=$('conn-1'),c2=$('conn-2'),c3=$('conn-3');
+  if(benefOK){s1.className='step done';c1.className='step-connector done';s2.className='step active';}else{s1.className='step active';c1.className='step-connector';s2.className='step';s3.className='step';s4.className='step';c2.className='step-connector';c3.className='step-connector';return}
+  if(veicCountOK()>0){s2.className='step done';c2.className='step-connector done';s3.className='step active';}else{c2.className='step-connector';s3.className='step';s4.className='step';c3.className='step-connector';return}
+  if(motCountOK()>0){s3.className='step done';c3.className='step-connector done';s4.className='step active';}else{c3.className='step-connector';s4.className='step'}
+  if(propOK())s4.className='step done';
+}
+
+/* ===== SUBMIT ===== */
+function submitForm(){
+  if(!benefOK){alert('⚠️ Conclua o beneficiário.');$('bloco-benef').scrollIntoView({behavior:'smooth'});return}
+  if(tipoAtual==='pf'&&!$('antt').value.trim()){alert('⚠️ Informe a ANTT (obrigatória).');$('antt').focus();return}
+  if(tipoAtual==='pj'&&!benefIsMei&&!$('antt').value.trim()){alert('⚠️ Empresa não-MEI exige ANTT para prosseguir.');$('antt').focus();return}
+  if(!$('cel1').value||!$('bmail').value){alert('⚠️ Informe Celular 1 e E-mail do beneficiário.');return}
+  if(veicCountOK()===0){alert('⚠️ Cadastre ao menos 1 veículo válido.');$('bloco-veic').scrollIntoView({behavior:'smooth'});return}
+  if(motCountOK()===0){alert('⚠️ Cadastre ao menos 1 motorista válido.');$('bloco-mot').scrollIntoView({behavior:'smooth'});return}
+  if(!propOK()){alert('⚠️ Conclua os dados do proprietário.');$('bloco-prop').scrollIntoView({behavior:'smooth'});return}
+  $('modal').classList.add('show');
+}
+
+/* ===== INIT ===== */
+initRuleStatus();
+renderAllStepRules();
+bindUpload($('pfdoc-wrap'),'pf',procPFDoc,false);
+bindUpload($('prop-doc-wrap'),'prop',procPropDoc,true);
+selectPropDoc('cnh');
+addMotorista(true);
+tryAutoDetectOwner();
+updateStepper();
+</script>
+</body>
+</html>
