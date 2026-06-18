@@ -188,7 +188,7 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
         <div class="form-row"><div class="form-group">
           <label>CNPJ <span class="required-star">*</span> <span class="fake-tag">🔗 Receita / SERPRO</span></label>
           <div class="input-group"><input type="text" id="cnpj" class="form-control" placeholder="00.000.000/0000-00" maxlength="18" oninput="maskCNPJ(this)"><button type="button" class="btn-buscar" id="btn-cnpj" onclick="consultarCNPJ()">🔍 Consultar</button></div>
-          <span class="field-hint">Teste: <b>00…00</b>=inválido · <b>11…11</b>=inativo · <b>22…22</b>=CNAE inválido · <b>33…33</b>=MEI · outro=Ltda c/ transporte</span>
+          <span class="field-hint">Teste: <b>00…00</b>=inválido · <b>11…11</b>=inativo · <b>22…22</b>=CNAE inválido · <b>33…33</b>=MEI · <b>44…44</b>=MEI CNAE secundário · outro=Ltda c/ transporte</span>
         </div></div>
         <div class="status-box loading" id="cnpj-loading"><div class="spinner"></div><div class="status-content"><strong>Consultando Receita/SERPRO…</strong></div></div>
         <div class="validated-card" id="cnpj-card">
@@ -443,6 +443,7 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
 /* ===== ESTADO ===== */
 let tipoAtual=null, docAtual=null, benefOK=false;
 let temANTT=false, anttObrigatoria=false, anttValor='', benefIsMei=false;
+let benefCnaeOk=false, benefCnaePrincipal=true;
 let benef={cpf:'',idade:null,ear:false,ppd:false,doc:''};
 let veicCount=0, motCount=0;
 let veicState={}, motState={};
@@ -488,7 +489,9 @@ const STEP_RULES={
       {id:'b-cnpj-sit',t:'Situação <b>ATIVA</b> (cód. 2 ou 5).'},
       {id:'b-cnpj-cnae',t:'CNAE de transporte <b>permitido</b> (4930201/202/203).'},
       {id:'b-antt-mei',t:'MEI → ANTT <b>opcional</b> (sem ANTT: só passeio).'},
-      {id:'b-antt-naomei',t:'Não-MEI → ANTT <b>obrigatória</b>.'}
+      {id:'b-antt-naomei',t:'Não-MEI → ANTT <b>obrigatória</b>.'},
+      {id:'b-mei-cnae-antt',t:'MEI com ANTT → CNAE poderá estar na <b>atividade principal</b> ou em <b>atividades secundárias</b>.'},
+      {id:'b-mei-cnae-seman',t:'MEI sem ANTT → CNAE deverá estar <b>obrigatoriamente</b> na atividade principal.'}
     ]},
     {ref:'Regra 4',title:'Conferência de documento',items:[
       {id:'b-ocr',t:'Dados conferem: <b>OCR × QRCode</b> (nº, nome, CPF).'}
@@ -585,7 +588,7 @@ function renderStepRules(step){
 function renderAllStepRules(){['benef','veic','mot','prop'].forEach(renderStepRules);}
 function applyBenefRuleContext(){
   const pfOnly=['b-rg-idade','b-rg-opera','b-pis','b-pis-cn','b-cnh-validade','b-cnh-ear','b-cnh-ppd','b-cnh-motorista','b-antt-pf'];
-  const pjOnly=['b-cnpj-valido','b-cnpj-sit','b-cnpj-cnae','b-antt-mei','b-antt-naomei'];
+  const pjOnly=['b-cnpj-valido','b-cnpj-sit','b-cnpj-cnae','b-antt-mei','b-antt-naomei','b-mei-cnae-antt','b-mei-cnae-seman'];
   const rgOnly=['b-rg-idade','b-rg-opera','b-pis-cn'];
   const cnhOnly=['b-cnh-validade','b-cnh-ear','b-cnh-ppd','b-cnh-motorista','b-pis'];
   Object.keys(ruleStatus).forEach(id=>{if(id.startsWith('b-'))ruleStatus[id]={s:'pending'};});
@@ -710,13 +713,14 @@ function lastVeiculoCRLV(){
 
 /* ===== TIPO ===== */
 function selectTipo(t){
-  tipoAtual=t;docAtual=null;benefOK=false;temANTT=false;anttObrigatoria=false;anttValor='';benefIsMei=false;
+  tipoAtual=t;docAtual=null;benefOK=false;temANTT=false;anttObrigatoria=false;anttValor='';benefIsMei=false;benefCnaeOk=false;benefCnaePrincipal=true;
   $('btn-pj').classList.toggle('selected',t==='pj');$('btn-pf').classList.toggle('selected',t==='pf');
   $('sec-pj').classList.toggle('visible',t==='pj');$('sec-pf').classList.toggle('visible',t==='pf');
   $('converge').classList.remove('visible');
   ['opt-cnh','opt-rg'].forEach(id=>$(id).classList.remove('selected'));
   $('sec-pfdoc').classList.remove('visible');$('pfdoc-card').classList.remove('show');$('elig-box').classList.remove('show','ok','no');
   $('cnpj-card').classList.remove('show');applyBenefRuleContext();
+  $('antt').classList.remove('error','success');
   $('pis-wrap').style.display = t==='pf'?'block':'none';
   if(t==='pf'){anttObrigatoria=true;temANTT=true;}
   ownerState.ok=false;ownerState.flowMode='auto';
@@ -724,6 +728,22 @@ function selectTipo(t){
 }
 
 /* ===== PJ ===== */
+function evalMeiCnaeRules(ru){
+  if(!benefIsMei||!benefCnaeOk){
+    ru['b-mei-cnae-antt']={s:'na',t:'Aplicável somente a <b>MEI</b> com CNAE de transporte permitido.'};
+    ru['b-mei-cnae-seman']={s:'na',t:'Aplicável somente a <b>MEI</b> com CNAE de transporte permitido.'};
+    return;
+  }
+  if(temANTT){
+    ru['b-mei-cnae-antt']={s:'pass',t:'MEI com ANTT → CNAE permitido na atividade principal ou secundária ✔'};
+    ru['b-mei-cnae-seman']={s:'na'};
+  }else{
+    ru['b-mei-cnae-antt']={s:'warn',t:'MEI com ANTT → informe a ANTT para CNAE em atividade secundária.'};
+    if(benefCnaePrincipal)ru['b-mei-cnae-seman']={s:'pass',t:'MEI sem ANTT → CNAE na <b>atividade principal</b> ✔'};
+    else ru['b-mei-cnae-seman']={s:'fail',t:'MEI sem ANTT → CNAE deve estar <b>obrigatoriamente</b> na atividade principal.'};
+  }
+}
+function meiCnaePendenteAntt(){return benefIsMei&&benefCnaeOk&&!benefCnaePrincipal&&!temANTT;}
 function consultarCNPJ(){
   const i=$('cnpj'),v=i.value.replace(/\D/g,'');
   $('cnpj-loading').classList.remove('show');$('cnpj-card').classList.remove('show');applyBenefRuleContext();i.classList.remove('success','error');
@@ -732,8 +752,9 @@ function consultarCNPJ(){
   setTimeout(()=>{
     $('cnpj-loading').classList.remove('show');$('btn-cnpj').disabled=false;
     let cen='ltda';
-    if(v==='00000000000000')cen='inv';else if(v==='11111111111111')cen='inativo';else if(v==='22222222222222')cen='cnae';else if(v==='33333333333333')cen='mei';
-    let mei=(cen==='mei'), cnae=(cen==='cnae')?'4711-3/02 (Comércio)':'4930-2/02 (Transporte)', loc=(cen==='cnae')?'Atividade secundária':'Atividade principal';
+    if(v==='00000000000000')cen='inv';else if(v==='11111111111111')cen='inativo';else if(v==='22222222222222')cen='cnae';else if(v==='33333333333333')cen='mei';else if(v==='44444444444444')cen='mei-sec';
+    let mei=(cen==='mei'||cen==='mei-sec'), cnae=(cen==='cnae')?'4711-3/02 (Comércio)':'4930-2/02 (Transporte)', loc=(cen==='cnae'||cen==='mei-sec')?'Atividade secundária':'Atividade principal';
+    benefCnaeOk=cen!=='cnae';benefCnaePrincipal=cen!=='cnae'&&cen!=='mei-sec';
     let nat=mei?'213-5 MEI':'206-2 Soc. Ltda', sit=(cen==='inativo')?'❌ BAIXADA (cód.8)':'✅ ATIVA (cód.2)';
     $('rf-razao').textContent=mei?'JOSÉ DA SILVA (MEI)':'TRANSPORTES SILVA LTDA';
     $('rf-cnpj').textContent=i.value;$('rf-sit').textContent=sit;$('rf-nat').textContent=nat;$('rf-cnae').textContent=cnae;$('rf-cnaeloc').textContent=loc;
@@ -755,16 +776,20 @@ function consultarCNPJ(){
       if(mei){
         ru['b-antt-mei']={s:'info',t:'<b>MEI</b> → ANTT <b>opcional</b>. Sem ANTT opera só <b>passeio</b>; com ANTT, opera carga.'};
         ru['b-antt-naomei']={s:'na'};
+        evalMeiCnaeRules(ru);
       }else{
         ru['b-antt-mei']={s:'na'};
         ru['b-antt-naomei']={s:temANTT?'pass':'warn',t:temANTT?'Não-MEI com ANTT informada ✔':'<b>Não-MEI</b> → ANTT <b>obrigatória</b>. Informe para prosseguir.'};
+        ru['b-mei-cnae-antt']={s:'na',t:'Aplicável somente a <b>MEI</b>.'};
+        ru['b-mei-cnae-seman']={s:'na',t:'Aplicável somente a <b>MEI</b>.'};
       }
     }
     applyBenefRuleContext();
     setRules('benef',ru);
     i.classList.add(fail?'error':'success');
-    benefOK=!fail;
+    benefOK=!fail&&!meiCnaePendenteAntt();
     if(!fail){$('converge').classList.add('visible');updateAnttLabel();}
+    syncBenefOkMeiCnae();
     refreshVeicCtx();tryAutoDetectOwner();updateStepper();
   },1600);
 }
@@ -892,10 +917,26 @@ function buscarCEP(){
 function updateAnttLabel(){
   const lab=$('antt-label'),div=$('antt-div-label'),hint=$('antt-hint');
   if(tipoAtual==='pf'){div.textContent='Registro ANTT (obrigatório)';lab.innerHTML='Nº ANTT / RNTRC <span class="required-star">*</span> <span class="fake-tag">🔗 ANTT (armazenado)</span>';hint.innerHTML='Obrigatória para PF. O sistema apenas <b>armazena</b> (validação futura).';}
-  else if(benefIsMei){div.textContent='Registro ANTT (opcional — MEI)';lab.innerHTML='Nº ANTT / RNTRC <span class="fake-tag">🔗 ANTT (armazenado)</span>';hint.innerHTML='MEI: sem ANTT opera só <b>passeio</b>; com ANTT, opera <b>carga</b>. O sistema apenas <b>armazena</b> (validação futura).';}
+  else if(benefIsMei){div.textContent='Registro ANTT (opcional — MEI)';lab.innerHTML='Nº ANTT / RNTRC <span class="fake-tag">🔗 ANTT (armazenado)</span>';hint.innerHTML='MEI: sem ANTT opera só <b>passeio</b> e CNAE deve estar na <b>atividade principal</b>; com ANTT, CNAE pode ser principal ou secundária. O sistema apenas <b>armazena</b> (validação futura).';}
   else{div.textContent='Registro ANTT (obrigatório)';lab.innerHTML='Nº ANTT / RNTRC <span class="required-star">*</span> <span class="fake-tag">🔗 ANTT (armazenado)</span>';hint.innerHTML='Empresa não-MEI exige ANTT para prosseguir. O sistema apenas <b>armazena</b> (validação futura).';}
 }
 function onAnttInput(){anttValor=$('antt').value.trim();recomputeANTT();}
+function updateAnttInputState(){
+  const antt=$('antt');if(!antt)return;
+  const pendente=meiCnaePendenteAntt();
+  antt.classList.toggle('error',pendente);
+  antt.classList.toggle('success',!pendente&&benefIsMei&&!!anttValor.length);
+}
+function syncBenefOkMeiCnae(){
+  if(benefIsMei&&benefCnaeOk&&$('cnpj-card')?.classList.contains('show')){
+    const pendente=meiCnaePendenteAntt();
+    benefOK=!pendente;
+    $('cnpj').classList.toggle('error',pendente);
+    $('cnpj').classList.toggle('success',!pendente);
+    $('converge').classList.add('visible');
+  }
+  updateAnttInputState();
+}
 function recomputeANTT(){
   if(tipoAtual==='pf'){temANTT=true;}
   else if(benefIsMei){temANTT=anttValor.length>0;}
@@ -905,11 +946,13 @@ function recomputeANTT(){
     ru['b-antt-pf']={s:anttValor.length?'pass':'warn',t:anttValor.length?'ANTT informada ✔':'Informe a ANTT (obrigatória para PF).'};
   }else if(benefIsMei){
     ru['b-antt-mei']={s:temANTT?'pass':'info',t:temANTT?'MEI com ANTT informada ✔':'MEI sem ANTT → opera só <b>passeio</b>.'};
+    evalMeiCnaeRules(ru);
   }else if(tipoAtual==='pj'){
     ru['b-antt-naomei']={s:temANTT?'pass':'fail',t:temANTT?'Não-MEI com ANTT informada ✔':'<b>Não-MEI</b> exige ANTT para prosseguir.'};
   }
   if(Object.keys(ru).length)setRules('benef',ru);
   else renderStepRules('benef');
+  syncBenefOkMeiCnae();
   refreshVeicCtx();
 }
 
@@ -917,7 +960,7 @@ function recomputeANTT(){
 const TIPO_INFO={PASSEIO:{cap:360,milhas:['LM']},FIORINO:{cap:650,milhas:['LM']},UTILITARIO:{cap:1000,milhas:['LM']},VAN:{cap:1500,milhas:['LM']},HR:{cap:1500,milhas:['FM','LM']},VUC:{cap:3500,milhas:['FM','LM','LH']},MEDIO:{cap:4500,milhas:['FM','LH']},TOCO:{cap:6000,milhas:['FM','LH']},TRUCK:{cap:12000,milhas:['FM','LH']},CARRETA:{cap:27000,milhas:['LH']},CAVALO:{cap:30000,milhas:['LH']}};
 const MILHA_LABEL={FM:'First Mile',LM:'Last Mile',LH:'Line Haul'};
 const MAIOR_QUE_VUC=['MEDIO','TOCO','TRUCK','CARRETA','CAVALO'];
-function veicBloqueadoAntt(tipo){return !temANTT&&tipo!=='PASSEIO';}
+function veicBloqueadoAntt(tipo){return (!temANTT&&tipo!=='PASSEIO')||(temANTT&&tipo==='PASSEIO');}
 function milhaExigePerguntasFinais(m){return m==='FM'||m==='LH';}
 const HUBS=['HUB Guarulhos/SP','SVC Campinas/SP','HUB Rio/RJ','SVC BH/MG','HUB Curitiba/PR'];
 const UFS=['SP','RJ','MG','PR','SC','RS','BA','PE','GO','DF'];
@@ -930,6 +973,10 @@ function refreshVeicCtx(){
   if(tipoAtual==='pj'&&!benefIsMei&&!temANTT){c.className='status-box fail show';c.querySelector('strong').textContent='Empresa sem ANTT';c.querySelector('p').innerHTML='Empresas <b>não-MEI</b> devem informar a ANTT para prosseguir.';$('veic-container').innerHTML='';veicState={};veicCount=0;return}
   if(temANTT){c.className='status-box ok show';c.querySelector('strong').textContent='Beneficiário COM ANTT';c.querySelector('p').innerHTML='Veículos de <b>carga</b> liberados. <b>Passeio bloqueado.</b>';}
   else{c.className='status-box warn show';c.querySelector('strong').textContent='Beneficiário SEM ANTT';c.querySelector('p').innerHTML='Somente <b>PASSEIO</b> (Last Mile).';}
+  Object.keys(veicState).forEach(k=>{
+    const idx=parseInt(k,10),item=$('veic-'+idx);
+    if(item&&veicState[idx]?.tipo){renderVeicBody(item,idx);evalVeic(idx);}
+  });
   if($('veic-container').children.length===0)addVeiculo(true);
 }
 
@@ -976,7 +1023,7 @@ function procCRLV(item,input,method,opts){
     let propName= outroDono?'CARLOS EDUARDO SILVA':(tipoAtual==='pj'?$('rf-razao').textContent:'JOÃO CARLOS PEREIRA');
     if(propCnpj){propDocDigits='12345678000199';propName='TRANSPORTES OUTRO LTDA';prop='12.345.678/0001-99';}
     if(propMotorista){const m=Object.values(motState).find(x=>x);propDocDigits=m?onlyDigits(m.cpf):'98765432101';propName=m?(m.name||'MOTORISTA VINCULADO'):'MOTORISTA VINCULADO';prop=formatCPF(propDocDigits);}
-    veicState[idx]={tipo,cap,ano,placa,chassi,prop,outroDono,propDocDigits,propName,propUf:$('estado')?.value||'SP',milhas:TIPO_INFO[tipo].milhas.slice(),milhaSel:TIPO_INFO[tipo].milhas.length===1?TIPO_INFO[tipo].milhas[0]:'',operacao:'',sider:null,roletado:null,check:{},propDocUp:false,ok:false,method,divergente:!!(opts&&opts.divergente),crlvManual};
+    veicState[idx]={tipo,cap,ano,placa,chassi,prop,outroDono,propDocDigits,propName,propUf:$('estado')?.value||'SP',milhas:TIPO_INFO[tipo].milhas.slice(),milhaSel:TIPO_INFO[tipo].milhas.length===1?TIPO_INFO[tipo].milhas[0]:'',operacao:'',sider:null,roletado:null,check:{},propDocUp:false,anttList:[],ok:false,method,divergente:!!(opts&&opts.divergente),crlvManual};
     ownerState.flowMode=crlvManual?'manual':'auto';
     renderVeicBody(item,idx);
     evalVeic(idx);
@@ -997,9 +1044,16 @@ function renderVeicBody(item,idx){
       </div>
     </div>`;
   if(veicBloqueadoAntt(s.tipo)){
-    const msg=benefIsMei
-      ?`Este beneficiário é <b>MEI sem ANTT</b> — somente veículos <b>PASSEIO</b> são permitidos. O CRLV indica tipo <b>${s.tipo}</b>.`
-      :`Beneficiário <b>sem ANTT</b> — somente veículos <b>PASSEIO</b> são permitidos. O CRLV indica tipo <b>${s.tipo}</b>.`;
+    let msg;
+    if(temANTT&&s.tipo==='PASSEIO'){
+      msg=benefIsMei
+        ?`Este beneficiário é <b>MEI com ANTT</b> — veículos <b>PASSEIO</b> não são permitidos. O CRLV indica tipo <b>${s.tipo}</b>.`
+        :`Beneficiário <b>com ANTT</b> — veículos <b>PASSEIO</b> não são permitidos. O CRLV indica tipo <b>${s.tipo}</b>.`;
+    }else{
+      msg=benefIsMei
+        ?`Este beneficiário é <b>MEI sem ANTT</b> — somente veículos <b>PASSEIO</b> são permitidos. O CRLV indica tipo <b>${s.tipo}</b>.`
+        :`Beneficiário <b>sem ANTT</b> — somente veículos <b>PASSEIO</b> são permitidos. O CRLV indica tipo <b>${s.tipo}</b>.`;
+    }
     body.innerHTML=crlvCard+`<div class="status-box fail show" style="margin-top:0"><span class="status-icon">❌</span><div class="status-content"><strong>Veículo não permitido</strong><p>${msg}</p></div></div>`;
     return;
   }
@@ -1011,8 +1065,16 @@ function renderVeicBody(item,idx){
   const segItens=['Rastreador','Sensores','Protetor de degrau','Telas de janela'];
   const segHtml = exigeSeg?`<div class="form-group" style="margin-top:12px"><label>Itens de segurança (obrigatório — veículo maior que VUC) <span class="required-star">*</span></label><div class="check-list">${segItens.map(c=>`<label class="check-item"><input type="checkbox" onchange="setCheck(${idx},'${c}',this.checked)"> ${c}</label>`).join('')}</div></div>`:'';
   const propHtml = s.outroDono?`<div class="form-group" style="margin-bottom:14px"><label>Documento do proprietário <span class="required-star">*</span> <span class="fake-tag">GR</span></label><div class="upload-area vp-up"><div class="upload-icon">📑</div><p><strong>Anexar documento do proprietário</strong></p><div class="upload-filename vp-name"></div></div><input type="file" class="upload-input vp-file" accept=".pdf,.jpg,.jpeg,.png"></div>`:'';
+  const anttBadges=(s.anttList||[]).map(v=>`<span class="milha-badge" style="background:#E3F2FD;color:#1565C0">🚛 ${v}</span>`).join('');
+  const anttHtml=`<div class="form-group" style="margin-bottom:14px">
+    <label>ANTT do veículo <span style="font-weight:400;color:#999;font-size:11px">(opcional, 1+)</span> <span class="fake-tag">🔗 ANTT (armazenado)</span></label>
+    <div class="antt-mini"><input type="text" class="form-control" id="vantt-${idx}" placeholder="RNTRC do veículo"><button type="button" class="btn-buscar" onclick="addVantt(${idx})">+ Add</button></div>
+    <div id="vantt-list-${idx}" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">${anttBadges}</div>
+    <span class="field-hint">O sistema apenas <b>armazena</b> a ANTT do veículo (validação futura via integração).</span>
+  </div>`;
   body.innerHTML=crlvCard+`
     ${propHtml}
+    ${anttHtml}
     <div class="form-group"><label>Milha indicada automaticamente ${multi?'<span class="required-star">*</span>':''}</label>${milhaHtml}</div>
     <div class="form-group" id="op-wrap-${idx}" style="margin-top:12px;display:none"></div>
     ${segHtml}
@@ -1039,6 +1101,15 @@ function setSider(idx,v){veicState[idx].sider=v;const it=$('veic-'+idx);it.query
 function setRol(idx,v){veicState[idx].roletado=v;const it=$('veic-'+idx);it.querySelector('.rl-s').classList.toggle('sel',v);it.querySelector('.rl-n').classList.toggle('sel',!v);evalVeic(idx)}
 function setCheck(idx,c,v){veicState[idx].check[c]=v;evalVeic(idx)}
 
+function addVantt(idx){
+  const i=$('vantt-'+idx);if(!i||!i.value.trim())return;
+  const v=i.value.trim();
+  if(!veicState[idx].anttList)veicState[idx].anttList=[];
+  veicState[idx].anttList.push(v);
+  const tag=document.createElement('span');tag.className='milha-badge';tag.style.cssText='background:#E3F2FD;color:#1565C0';tag.textContent='🚛 '+v;
+  $('vantt-list-'+idx).appendChild(tag);i.value='';
+}
+
 function evalVeic(idx){
   const s=veicState[idx],item=$('veic-'+idx);if(!item)return;
   let fail=false;const ru={};
@@ -1051,7 +1122,7 @@ function evalVeic(idx){
   else ru['v-placa']={s:'pass',t:'Placa e chassi inéditos no fluxo ✔'};
   if(s.outroDono){if(s.propDocUp)ru['v-prop']={s:'pass',t:'Proprietário ≠ beneficiário — documento anexado ✔'};else{ru['v-prop']={s:'warn',t:'Proprietário ≠ beneficiário — <b>anexe o documento</b>.'};fail=true;}}
   else ru['v-prop']={s:'pass',t:'Proprietário = beneficiário ✔ (CRLV).'};
-  if(temANTT){if(s.tipo==='PASSEIO'){ru['v-antt']={s:'fail',t:'Com ANTT <b>não</b> pode passeio.'};fail=true;}else ru['v-antt']={s:'pass',t:`Com ANTT: <b>${s.tipo}</b> permitido ✔`};}
+  if(temANTT){if(s.tipo==='PASSEIO'){ru['v-antt']={s:'fail',t:benefIsMei?'MEI com ANTT: veículo <b>PASSEIO</b> não permitido.':'Com ANTT <b>não</b> pode passeio.'};fail=true;}else ru['v-antt']={s:'pass',t:`Com ANTT: <b>${s.tipo}</b> permitido ✔`};}
   else{if(s.tipo!=='PASSEIO'){ru['v-antt']={s:'fail',t:benefIsMei?'MEI sem ANTT: somente <b>PASSEIO</b> permitido.':'Sem ANTT só <b>PASSEIO</b> permitido.'};fail=true;}else ru['v-antt']={s:'pass',t:benefIsMei?'MEI sem ANTT: PASSEIO ✔':'Sem ANTT: PASSEIO ✔'};}
   if(veicBloqueadoAntt(s.tipo)){
     ru['v-milha']={s:'na',t:'Indisponível — veículo incompatível com ANTT do beneficiário.'};
@@ -1142,15 +1213,11 @@ function procCNH(item,input,method,opts){
         </div>
       </div>
       ${toxField}
-      <div class="section-divider"><span>ANTT do motorista (opcional, 1+)</span></div>
-      <div class="antt-mini"><input type="text" class="form-control" id="mantt-${idx}" placeholder="RNTRC do motorista"><button type="button" class="btn-buscar" onclick="addMantt(${idx})">+ Add</button></div>
-      <div id="mantt-list-${idx}" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
       <div class="section-divider"><span>Contato</span></div>
       <div class="form-row two"><div class="form-group"><label>Telefone <span class="required-star">*</span></label><input type="text" class="form-control" placeholder="(11) 99999-9999" maxlength="15" oninput="maskPhone(this)"></div><div class="form-group"><label>E-mail</label><input type="email" class="form-control" placeholder="motorista@email.com"></div></div>`;
     evalMot(idx);tryAutoDetectOwner();
   },1900);
 }
-function addMantt(idx){const i=$('mantt-'+idx);if(!i.value.trim())return;const tag=document.createElement('span');tag.className='milha-badge';tag.style.cssText='background:#E3F2FD;color:#1565C0';tag.textContent='🚛 '+i.value.trim();$('mantt-list-'+idx).appendChild(tag);i.value=''}
 
 function evalMot(idx){
   const s=motState[idx],item=$('mot-'+idx);if(!item)return;
